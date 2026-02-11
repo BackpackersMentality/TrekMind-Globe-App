@@ -1,0 +1,7 @@
+# TrekMind Globe
+
+Interactive 3D globe used by the TrekMind app.
+
+- Controlled via postMessage
+- No internal filters
+- Receives trek visibility + selection externally
