@@ -1,0 +1,150 @@
+TASK OBJECTIVE
+
+Add Trek Tiers (Tier 1 / Tier 2 / Tier 3) to the existing trek database and UI without creating duplicate filters or state.
+
+📌 IMPLEMENTATION REQUIREMENTS
+1. Data Layer (Single Source of Truth)
+
+Add a new field to each trek object:
+
+tier: "Tier 1" | "Tier 2" | "Tier 3"
+
+
+Do NOT create a new trek list or duplicate dataset
+
+Update the existing 67 treks only
+
+2. Tier Definitions (Editorial – Fixed)
+
+Use exactly these assignments:
+
+🟦 Tier 1 — Flagship / Iconic
+
+Everest Base Camp
+Annapurna Circuit
+Tour du Mont Blanc
+Torres del Paine (O)
+Inca Trail
+Kilimanjaro (Machame)
+GR20
+PCT (High Sierra)
+Snowman Trek
+Camino de Santiago
+Kungsleden
+Laugavegur Trail
+Milford Track
+Routeburn Track
+Overland Track
+Annapurna Base Camp (ABC)
+Mount Fuji
+Mount Kailash Kora
+West Coast Trail
+Walker’s Haute Route
+Karakoram Baltoro
+Drakensberg Grand Traverse
+
+🟩 Tier 2 — Classic / World-Class
+
+Huayhuash Circuit
+Alta Via 1
+Alta Via 2
+Alta Via 4
+Manaslu Circuit
+Salkantay Trek
+Peaks of the Balkans
+Markha Valley
+Lycian Way
+Kumano Kodo
+Arctic Circle Trail
+Fisherman’s Trail
+Simien Mountains
+Ausangate Circuit
+Gokyo Lakes
+Banff Highline
+Coast to Coast (UK)
+Tongariro Circuit
+Mount Kenya
+Wonderland Trail
+Fitz Roy Trek
+East Coast Trail
+Triglav Circuit
+Jordan Trail (Dana)
+Kalalau Trail
+Larapinta Trail
+Tiger Leaping Gorge
+
+🟨 Tier 3 — Hidden Gem / Specialist
+
+Santa Cruz Trek
+Lost City Trek
+Acatenango–Fuego
+El Choro Trek
+Cordillera Real
+Mgoun Traverse
+Toubkal Circuit
+Rwenzori Mountains
+Mestia to Ushguli
+Caucasus (Tusheti)
+Altai Mountains
+Yading Kora
+Fish River Canyon
+Mount Hood Timberline
+Huemul Circuit
+Mount Rinjani
+Alu Sku (Kygrztakn)
+
+3. UI Integration (Minimal & Clean)
+
+Add ONE new filter section titled “Trek Tier”
+
+Options:
+
+All (default)
+
+Tier 1 – Flagship
+
+Tier 2 – Classic
+
+Tier 3 – Hidden Gem
+
+Reuse the existing filter state system
+
+Do NOT duplicate filter components or logic
+
+4. Marker & Card Enhancements
+
+Show Tier badge on:
+
+Trek card
+
+Marker hover / tap tooltip
+
+Optional but preferred:
+
+Tier 1 pins slightly larger or brighter
+
+Tier 3 more subtle
+
+5. Non-Goals (Important)
+
+❌ Do NOT rebuild filters
+
+❌ Do NOT add clustering logic
+
+❌ Do NOT modify globe interaction
+
+❌ Do NOT create a second tier filter accidentally
+
+✅ SUCCESS CHECK
+
+Filtering by Tier works alone and in combination with:
+
+Continent
+
+Accommodation
+
+Duration
+
+No duplicate filters appear
+
+Existing functionality remains unchanged

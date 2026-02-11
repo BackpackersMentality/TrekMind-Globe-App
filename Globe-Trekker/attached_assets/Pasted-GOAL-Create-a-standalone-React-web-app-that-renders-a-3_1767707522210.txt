@@ -1,0 +1,172 @@
+GOAL
+
+Create a standalone React web app that renders a 3D interactive globe with clickable trek markers for TrekMind.
+
+This is Phase 1 only: rendering + markers + click interaction.
+
+TECH STACK (REQUIRED)
+
+React
+
+TypeScript
+
+Vite
+
+react-globe.gl
+
+Three.js (via dependency)
+
+No backend
+
+No authentication
+
+No AI features
+
+No external APIs
+
+STEP 1 — PROJECT SETUP
+
+Initialize a new Vite + React + TypeScript project
+
+Install:
+
+react-globe.gl
+
+three
+
+STEP 2 — TREK DATA (LOCAL ONLY)
+
+Create a file at:
+
+src/data/treks.ts
+
+
+Define this interface:
+
+export interface TrekGlobeNode {
+  id: string
+  name: string
+  country: string
+  region: string
+  latitude: number
+  longitude: number
+  difficulty: "Easy" | "Moderate" | "Hard" | "Extreme"
+  days: number
+  maxAltitude: number
+  distanceKm: number
+  popularityScore: number
+}
+
+
+Add 10 sample treks using approximate coordinates for now
+(accuracy can be refined later).
+
+⚠️ Do NOT fetch data externally.
+
+STEP 3 — GLOBE COMPONENT
+
+Create:
+
+src/components/Globe.tsx
+
+
+The globe must:
+
+Render a realistic Earth
+
+Auto-rotate slowly on load
+
+Allow:
+
+Mouse drag → rotate
+
+Scroll / pinch → zoom
+
+Render markers at trek lat/long positions
+
+Marker rules:
+
+Size based on popularityScore
+
+Color by difficulty:
+
+Easy → green
+
+Moderate → blue
+
+Hard → orange
+
+Extreme → red
+
+STEP 4 — CLICK INTERACTION
+
+When a marker is clicked:
+
+Show a simple overlay panel or modal
+
+Display:
+
+Trek name
+
+Country / region
+
+Days
+
+Distance (km)
+
+Max altitude
+
+Difficulty
+
+Include a button:
+
+View Trek Details →
+
+
+(No navigation yet)
+
+STEP 5 — APP WIRING
+
+Update:
+
+src/App.tsx
+
+
+Render the globe full-screen
+
+Import trek data locally
+
+No routing
+
+No UI polish yet
+
+STRICT LIMITS (IMPORTANT)
+
+❌ No clustering logic
+❌ No search / filters
+❌ No labels on globe
+❌ No itineraries
+❌ No gear assistant
+❌ No animations beyond rotation
+
+Stop once:
+
+Globe renders
+
+Markers show correctly
+
+Click interaction works
+
+OUTPUT EXPECTATION
+
+App compiles and runs
+
+Globe loads quickly
+
+Markers align correctly with geography
+
+Code is simple and reusable
+
+START NOW
+
+Begin with project setup and globe rendering.
