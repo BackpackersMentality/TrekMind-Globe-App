@@ -14,12 +14,20 @@ function Router() {
   );
 }
 
+// In your App.tsx or wherever you have header/logo
 function App() {
+  const isEmbed = new URLSearchParams(window.location.search).get("embed") === "true";
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <Toaster />
-      <Router />
-    </QueryClientProvider>
+    <div>
+      {!isEmbed && (
+        <header>
+          <img src="/logo.png" alt="Logo" />
+          <h1>TrekMind Globe</h1>
+        </header>
+      )}
+      <GlobeViewer />
+    </div>
   );
 }
 
