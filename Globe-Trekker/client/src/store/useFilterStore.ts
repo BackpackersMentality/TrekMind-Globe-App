@@ -7,14 +7,20 @@ export type TrekTier = "Tier 1" | "Tier 2" | "Tier 3";
 
 interface FilterState {
   continent: "ALL" | Continent;
+  region: string | null;
   accommodation: "ALL" | Accommodation;
   length: "ALL" | LengthBucket;
   tier: "ALL" | TrekTier;
+  duration: string | null;
+  difficulty: string | null;
   isExpanded: boolean;
   setContinent: (continent: "ALL" | Continent) => void;
+  setRegion: (region: string | null) => void;
   setAccommodation: (accommodation: "ALL" | Accommodation) => void;
   setLength: (length: "ALL" | LengthBucket) => void;
   setTier: (tier: "ALL" | TrekTier) => void;
+  setDuration: (duration: string | null) => void;
+  setDifficulty: (difficulty: string | null) => void;
   setIsExpanded: (isExpanded: boolean) => void;
   resetFilters: () => void;
 }
