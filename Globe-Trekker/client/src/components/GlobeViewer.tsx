@@ -44,6 +44,52 @@ export function GlobeViewer({ onZoom }: { onZoom?: (direction: 'in' | 'out' | 'r
     return () => window.removeEventListener('globe-zoom', handleZoomCommand);
   }, []);
 
+  // ============================================
+// LISTEN FOR FILTER UPDATES FROM PARENT APP
+// ============================================
+useEffect(() => {
+  // Only listen if running in iframe (embed mode)
+  if (!isEmbed) return;
+
+  const handleMessage = (event: MessageEvent) => {
+    // Security: In production, verify event.origin matches your main app domain
+    // if (event.origin !== 'https://trekmind.com') return;
+    
+    if (!event.data?.type) return;
+
+    if (event.data.type === "TREKMIND_FILTER_UPDATE") {
+      const filters = event.data.payload;
+      
+      console.log('🌍 Globe received filters:', filters);
+      
+      // Update the filter store with values from parent
+      const filterStore = useFilterStore.getState();
+      
+      if (filters.tier !== undefined) {
+        filterStore.setTier(filters.tier);
+      }
+      if (filters.region !== undefined) {
+        filterStore.setRegion(filters.region);
+      }
+      if (filters.accommodation !== undefined) {
+        filterStore.setAccommodation(filters.accommodation);
+      }
+      if (filters.duration !== undefined) {
+        filterStore.setDuration(filters.duration);
+      }
+      if (filters.difficulty !== undefined) {
+        filterStore.setDifficulty(filters.difficulty);
+      }
+    }
+  };
+
+  window.addEventListener("message", handleMessage);
+
+  return () => {
+    window.removeEventListener("message", handleMessage);
+  };
+}, [isEmbed]);
+  
   const filteredTreks = useMemo(() => {
     return TREKS.filter(trek => {
       const matchContinent = continent === "ALL" || trek.continent === continent;
@@ -228,8 +274,25 @@ export function GlobeViewer({ onZoom }: { onZoom?: (direction: 'in' | 'out' | 'r
               // Single trek clicked - just show this one trek
               setSwipeableTreks([d]);
               setInitialTrekIndex(0);
-            }
-          };
+
+              // ============================================
+    // SEND TREK SELECTION TO PARENT APP
+    // ============================================
+    if (isEmbed) {
+      window.parent.postMessage(
+        {
+          type: "TREK_SELECTED_FROM_GLOBE",
+          payload: { 
+            id: d.id,
+            slug: d.slug || d.id,
+            name: d.name 
+          }
+        },
+        "*" // In production, replace with specific origin: "https://trekmind.com"
+      );
+    }
+  }
+};
 
           // Sync visibility on mount and anytime altitude changes
           updateVisibility();
