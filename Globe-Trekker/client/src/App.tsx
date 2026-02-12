@@ -1,18 +1,6 @@
 import { useMemo } from "react";
-import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
-import Home from "@/pages/Home";
-import NotFound from "@/pages/not-found";
-
-function Router() {
-  return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
+import { GlobeViewer } from "./components/GlobeViewer";
+import "./index.css";
 
 function App() {
   const isEmbed = useMemo(
@@ -21,23 +9,16 @@ function App() {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <div className={isEmbed ? "h-screen w-screen overflow-hidden" : ""}>
-        {/* Hide header/logo in embed mode */}
-        {!isEmbed && (
-          <header className="bg-white shadow-sm p-4 flex items-center gap-4">
-            <img src="/logo.png" alt="TrekMind Logo" className="h-10" />
-            <h1 className="text-2xl font-bold">TrekMind Globe</h1>
-          </header>
-        )}
+    <div className="h-screen w-screen">
+      {!isEmbed && (
+        <header className="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-3 flex items-center gap-3">
+          <img src="/logo.png" alt="TrekMind" className="h-8" />
+          <h1 className="text-xl font-bold">TrekMind Globe</h1>
+        </header>
+      )}
 
-        {/* Router renders Home (which has GlobeViewer) */}
-        <div className={isEmbed ? "h-full" : "h-[calc(100vh-80px)]"}>
-          <Router />
-        </div>
-        
-      </div>
-    </QueryClientProvider>
+      <GlobeViewer />
+    </div>
   );
 }
 
