@@ -33,3 +33,10 @@
     "vite": "^7.3.0"
   }
 }
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "ls -la && pwd && vite build",
+    "preview": "vite preview"
+  }
+}
