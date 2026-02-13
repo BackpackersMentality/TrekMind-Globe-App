@@ -37,4 +37,16 @@ export const useFilterStore = create<FilterState>((set) => ({
   setTier: (tier) => set({ tier }),
   setIsExpanded: (isExpanded) => set({ isExpanded }),
   resetFilters: () => set({ continent: "ALL", accommodation: "ALL", length: "ALL", tier: "ALL" }),
+
+  
+  resetFilters: () => set({
+    continent: "ALL",
+    accommodation: "ALL",
+    length: "ALL",
+    tier: "ALL",
+    region: null,
+    duration: null,
+    difficulty: null,
+  }),
+}));
 }));
