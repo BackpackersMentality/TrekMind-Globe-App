@@ -1,5 +1,3 @@
-import { type TrekGlobeNode } from "@shared/schema";
-
 /**
  * Calculates the Haversine distance between two points on a sphere.
  */
