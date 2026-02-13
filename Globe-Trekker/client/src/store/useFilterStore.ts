@@ -27,26 +27,28 @@ interface FilterState {
 
 export const useFilterStore = create<FilterState>((set) => ({
   continent: "ALL",
+  region: null,
   accommodation: "ALL",
   length: "ALL",
   tier: "ALL",
+  duration: null,
+  difficulty: null,
   isExpanded: false,
   setContinent: (continent) => set({ continent }),
+  setRegion: (region) => set({ region }),
   setAccommodation: (accommodation) => set({ accommodation }),
   setLength: (length) => set({ length }),
   setTier: (tier) => set({ tier }),
+  setDuration: (duration) => set({ duration }),
+  setDifficulty: (difficulty) => set({ difficulty }),
   setIsExpanded: (isExpanded) => set({ isExpanded }),
-  resetFilters: () => set({ continent: "ALL", accommodation: "ALL", length: "ALL", tier: "ALL" }),
-
-  
-  resetFilters: () => set({
-    continent: "ALL",
-    accommodation: "ALL",
-    length: "ALL",
-    tier: "ALL",
+  resetFilters: () => set({ 
+    continent: "ALL", 
     region: null,
+    accommodation: "ALL", 
+    length: "ALL", 
+    tier: "ALL",
     duration: null,
-    difficulty: null,
+    difficulty: null
   }),
-}));
 }));
