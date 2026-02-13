@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import Globe, { type GlobeMethods } from "react-globe.gl";
-import { TREKS } from "@/data/treks";
-import { useTrekStore } from "@/store/useTrekStore";
-import { useFilterStore } from "@/store/useFilterStore";
-import { SwipeableTrekCards } from '@/components/SwipeableTrekCards';
-import { clusterTreks, type TrekCluster, getClusteredTreks } from "@/lib/clustering";
+import { TREKS } from "/data/treks";
+import { useTrekStore } from "/store/useTrekStore";
+import { useFilterStore } from "/store/useFilterStore";
+import { SwipeableTrekCards } from '/components/SwipeableTrekCards';
+import { clusterTreks, type TrekCluster, getClusteredTreks } from "/lib/clustering";
 
 export function GlobeViewer({ onZoom }: { onZoom?: (direction: 'in' | 'out' | 'reset') => void }) {
   const isEmbed = useMemo(() => new URLSearchParams(window.location.search).get("embed") === "true", []);
