@@ -5,6 +5,7 @@ import { TREKS } from "../data/treks";
 import { useTrekStore } from "../store/useTrekStore";
 import { useFilterStore } from "../store/useFilterStore";
 import { SwipeableTrekCards } from './SwipeableTrekCards';
+import { ZoomControls } from './ZoomControls';
 import { clusterTreks } from "../lib/clustering";
 
 export function GlobeViewer({ onZoom }: { onZoom?: (direction: 'in' | 'out' | 'reset') => void }) {
@@ -44,6 +45,26 @@ export function GlobeViewer({ onZoom }: { onZoom?: (direction: 'in' | 'out' | 'r
     window.addEventListener('globe-zoom', handleZoomCommand);
     return () => window.removeEventListener('globe-zoom', handleZoomCommand);
   }, []);
+
+  // Zoom handler functions for the controls
+  const handleZoomIn = () => {
+    if (!globeEl.current) return;
+    const currentPov = globeEl.current.pointOfView();
+    const zoomStep = 0.2;
+    globeEl.current.pointOfView({ altitude: Math.max(0.1, currentPov.altitude - zoomStep) }, 400);
+  };
+
+  const handleZoomOut = () => {
+    if (!globeEl.current) return;
+    const currentPov = globeEl.current.pointOfView();
+    const zoomStep = 0.2;
+    globeEl.current.pointOfView({ altitude: Math.min(4.0, currentPov.altitude + zoomStep) }, 400);
+  };
+
+  const handleReset = () => {
+    if (!globeEl.current) return;
+    globeEl.current.pointOfView({ lat: 0, lng: 0, altitude: 2.5 }, 800);
+  };
 
   // ============================================
   // LISTEN FOR FILTER UPDATES FROM PARENT APP
@@ -310,6 +331,15 @@ export function GlobeViewer({ onZoom }: { onZoom?: (direction: 'in' | 'out' | 'r
         atmosphereColor="#3a228a"
         atmosphereAltitude={0.15}
       />
+
+      {/* Zoom Controls */}
+      {!isEmbed && (
+        <ZoomControls
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onReset={handleReset}
+        />
+      )}
 
       {/* Swipeable trek cards */}
       {swipeableTreks && (
