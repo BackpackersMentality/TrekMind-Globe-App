@@ -19,6 +19,26 @@
     "popularityScore": 8
   },
   {
+    "id": "haute_route",
+    "name": "Walker's Haute Route",
+    "tier": 1,
+    "region": "Europe",
+    "country": "France/Switzerland",
+    "terrain": "High alpine",
+    "accommodation": "Refuges, hotels",
+    "keyFeatures": "Classic Alpine traverse, Matterhorn, glaciers",
+    "distance": "180 km",
+    "totalDays": "12 days",
+    "maxAltitude": "2921m",
+    "permits": "Not required",
+    "latitude": 46.02,
+    "longitude": 7.74,
+    "imageFilename": "haute_route"
+    "terrain": "High alpine",
+    "season": "June-September",
+    "popularityScore": 10,
+  },
+  {
     "id": "abc",
     "name": "Annapurna Base Camp (ABC)",
     "tier": 1,
