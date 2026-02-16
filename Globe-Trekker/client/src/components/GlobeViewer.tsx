@@ -173,8 +173,8 @@ export function GlobeViewer({ onZoom }: { onZoom?: (direction: 'in' | 'out' | 'r
       const trek = TREKS.find((t) => String(t.id) === String(selectedTrekId));
       if (trek) {
         globeEl.current.pointOfView({
-          lat: trek.lat,
-          lng: trek.lng,
+          lat: trek.latitude,
+          lng: trek.longitude,
           altitude: 1.6
         }, 1200);
       }
@@ -197,8 +197,8 @@ export function GlobeViewer({ onZoom }: { onZoom?: (direction: 'in' | 'out' | 'r
         
         // Pin Markers using HTML Elements for custom styling
         htmlElementsData={clusteredData}
-        htmlLat="lat"
-        htmlLng="lng"
+        htmlLat="latitude"
+        htmlLng="longitude"
         htmlElement={(d: any) => {
           const isCluster = d.isCluster;
           const trekId = isCluster ? null : String(d.id);
