@@ -15,8 +15,8 @@ function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): nu
 
 export interface TrekCluster {
   id: string;
-  lat: number;
-  lng: number;
+  latitude: number;
+  longitude: number;
   treks: any[];
   isCluster: boolean;
 }
@@ -36,7 +36,7 @@ export function clusterTreks(treks: any[], thresholdKm: number): any[] {
       const other = treks[j];
       if (processed.has(String(other.id))) continue;
 
-      const distance = getDistance(trek.lat, trek.lng, other.lat, other.lng);
+      const distance = getDistance(trek.latitude, trek.longitude, other.latitude, other.longitude);
       if (distance <= thresholdKm) {
         nearby.push(other);
         processed.add(String(other.id));
@@ -46,8 +46,8 @@ export function clusterTreks(treks: any[], thresholdKm: number): any[] {
     if (nearby.length > 1) {
       clusters.push({
         id: `cluster-${trek.id}`,
-        lat: trek.lat,
-        lng: trek.lng,
+        latitude: trek.latitude,
+        longitude: trek.longitude,
         treks: nearby,
         isCluster: true
       });
@@ -73,10 +73,10 @@ export function getClusteredTreks(
     if (String(trek.id) === String(trekId)) continue;
     
     const distance = getDistance(
-      targetTrek.lat,
-      targetTrek.lng,
-      trek.lat,
-      trek.lng
+      targetTrek.latitude,
+      targetTrek.longitude,
+      trek.latitude,
+      trek.longitude
     );
     
     if (distance <= maxDistance) {
