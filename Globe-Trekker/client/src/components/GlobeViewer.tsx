@@ -310,7 +310,7 @@ export function GlobeViewer({ onZoom }: { onZoom?: (direction: 'in' | 'out' | 'r
                       name: d.name 
                     }
                   },
-                  "*" // In production, replace with specific origin: "https://trekmind.com"
+                  "https://6e90758d.trekmind-globe-app.pages.dev/" // In production, replace with specific origin: "https://trekmind.com"
                 );
               }
             }
