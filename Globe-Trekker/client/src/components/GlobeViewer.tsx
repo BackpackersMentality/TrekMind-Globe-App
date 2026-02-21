@@ -284,38 +284,53 @@ export function GlobeViewer({ onZoom }: { onZoom?: (direction: 'in' | 'out' | 'r
             </div>
           `;
 
-          el.onpointerdown = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            if (isCluster) {
-              // Cluster clicked - show all treks in cluster
-              setSwipeableTreks(d.treks);
-              setInitialTrekIndex(0);
-            } else {
-              // Single trek clicked - just show this one trek
-              setSwipeableTreks([d]);
-              setInitialTrekIndex(0);
-
-              // ============================================
-              // SEND TREK SELECTION TO PARENT APP
-              // ============================================
-              if (isEmbed) {
-                window.parent.postMessage(
-                  {
-                    type: "TREK_SELECTED_FROM_GLOBE",
-                    payload: { 
-                      id: d.id,
-                      slug: d.slug || d.id,
-                      name: d.name 
-                    }
-                  },
-                  "https://6e90758d.trekmind-globe-app.pages.dev/" // In production, replace with specific origin: "https://trekmind.com"
-                );
-              }
-            }
-          };
-
+         el.onpointerdown = (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  if (isCluster) {
+    // In embed mode, send first trek of cluster to parent
+    if (isEmbed) {
+      window.parent.postMessage(
+        {
+          type: "TREK_SELECTED_FROM_GLOBE",
+          payload: { 
+            id: d.treks[0].id,
+            slug: d.treks[0].slug || d.treks[0].id,
+            name: d.treks[0].name 
+          }
+        },
+        "*"
+      );
+      return; // ✅ CRITICAL: Exit early, don't show cards in embed mode
+    }
+    
+    // Only in standalone mode: show cluster cards
+    setSwipeableTreks(d.treks);
+    setInitialTrekIndex(0);
+  } else {
+    // Single trek clicked
+    if (isEmbed) {
+      // In embed mode: send message to parent and EXIT
+      window.parent.postMessage(
+        {
+          type: "TREK_SELECTED_FROM_GLOBE",
+          payload: { 
+            id: d.id,
+            slug: d.slug || d.id,
+            name: d.name 
+          }
+        },
+        "https://6e90758d.trekmind-globe-app.pages.dev/"
+      );
+      return; // ✅ CRITICAL: Exit early, don't show cards in embed mode
+    }
+    
+    // Only in standalone mode: show single trek card
+    setSwipeableTreks([d]);
+    setInitialTrekIndex(0);
+  }
+};
           // Sync visibility on mount and anytime altitude changes
           updateVisibility();
           const controls = globeEl.current?.controls();
