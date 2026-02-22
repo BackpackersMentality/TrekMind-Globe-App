@@ -321,7 +321,7 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
             name: d.name 
           }
         },
-        "https://6e90758d.trekmind-globe-app.pages.dev/"
+        "*"
       );
       return; // ✅ CRITICAL: Exit early, don't show cards in embed mode
     }
@@ -339,8 +339,12 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
           return el;
         }}
         
-        onGlobeClick={() => {
+          onGlobeClick={() => {
           setSelectedTrekId(null);
+          // ✅ CRITICAL FIX: Tell the Main App to close the Trek Card
+          if (isEmbed) {
+            window.parent.postMessage({ type: "TREK_DESELECTED_FROM_GLOBE" }, "*");
+          }
         }}
         
         atmosphereColor="#3a228a"
