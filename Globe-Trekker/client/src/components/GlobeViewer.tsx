@@ -8,7 +8,7 @@ import { SwipeableTrekCards } from './SwipeableTrekCards';
 import { ZoomControls } from './ZoomControls';
 import { clusterTreks } from "../lib/clustering";
 
-export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' | 'out' | 'reset') => void }) {
+export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' | 'out' | 'reset') => void, hideCards?: boolean }) {
   const isEmbed = useMemo(() => new URLSearchParams(window.location.search).get("embed") === "true", []);
   const globeEl = useRef<GlobeMethods | undefined>(undefined);
   const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
