@@ -3,6 +3,10 @@ import "./index.css";
 
 function App() {
   const isEmbed = new URLSearchParams(window.location.search).get("embed") === "true";
+  const hideCards = params.get('hideCards') === 'true';
+
+// Only show swipeable cards if NOT hiding them
+{!hideCards && <SwipeableTrekCards ... />}
 
   return (
     <div className="h-screen w-screen">
