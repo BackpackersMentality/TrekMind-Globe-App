@@ -336,7 +336,12 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
         }}
         
         onGlobeClick={() => {
-          setSelectedTrekId(null);
+          setSelectedTrekId(null); // Clears the globe's active state
+          
+          if (isEmbed) {
+            // Tells the Main App to close the TrekPreviewPanel
+            window.parent.postMessage({ type: "TREK_DESELECTED_FROM_GLOBE" }, "*");
+          }
         }}
         
         atmosphereColor="#3a228a"
