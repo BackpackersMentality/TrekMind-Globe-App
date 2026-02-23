@@ -288,51 +288,44 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
             e.preventDefault();
             e.stopPropagation();
             
-            if (isCluster) {
-              // In embed mode, send first trek of cluster to parent
-              if (isEmbed) {
-                console.log('📤 Sending cluster trek to parent:', d.treks[0].id);
-                window.parent.postMessage(
-                  {
-                    type: "TREK_SELECTED_FROM_GLOBE",
-                    payload: { 
-                      id: d.treks[0].id,
-                      slug: d.treks[0].slug || d.treks[0].id,
-                      name: d.treks[0].name 
-                    }
-                  },
-                  "*"
-                );
-                return; // ✅ CRITICAL: Exit early, don't show cards in embed mode
-              }
-              
-              // Only in standalone mode: show cluster cards
-              setSwipeableTreks(d.treks);
-              setInitialTrekIndex(0);
-            } else {
-              // Single trek clicked
-              if (isEmbed) {
-                // In embed mode: send message to parent and EXIT
-                console.log('📤 Sending single trek to parent:', d.id);
-                window.parent.postMessage(
-                  {
-                    type: "TREK_SELECTED_FROM_GLOBE",
-                    payload: { 
-                      id: d.id,
-                      slug: d.slug || d.id,
-                      name: d.name 
-                    }
-                  },
-                  "*"
-                );
-                return; // ✅ CRITICAL: Exit early, don't show cards in embed mode
-              }
-              
-              // Only in standalone mode: show single trek card
-              setSwipeableTreks([d]);
-              setInitialTrekIndex(0);
+          onPointClick={(d: any) => {
+          // Check if it's a cluster
+          if (d.properties?.cluster || d.points || d.treks) {
+            // Extract the leaves/points from the cluster
+            const clusterLeaves = d.points || d.treks || d.properties?.points || [];
+            
+            if (isEmbed) {
+              // Send an array of objects containing the IDs to the Main App
+              window.parent.postMessage(
+                {
+                  type: "TREK_SELECTED_FROM_GLOBE",
+                  payload: clusterLeaves.map((trek: any) => ({ id: trek.id }))
+                },
+                "*"
+              );
+              return; 
             }
-          };
+            
+            // Standalone mode: show swipeable cards
+            setSwipeableTreks(clusterLeaves);
+            setInitialTrekIndex(0);
+          } else {
+            // Single trek clicked
+            if (isEmbed) {
+              window.parent.postMessage(
+                {
+                  type: "TREK_SELECTED_FROM_GLOBE",
+                  payload: { id: d.id, name: d.name }
+                },
+                "*"
+              );
+              return;
+            }
+            // Standalone mode: show single card
+            setSwipeableTreks([d]);
+            setInitialTrekIndex(0);
+          }
+        }}
 
           // Sync visibility on mount and anytime altitude changes
           updateVisibility();
