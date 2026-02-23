@@ -8,7 +8,7 @@ import { SwipeableTrekCards } from './SwipeableTrekCards';
 import { ZoomControls } from './ZoomControls';
 import { clusterTreks } from "../lib/clustering";
 
-export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' | 'out' | 'reset') => void, hideCards?: boolean }) {
+export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' | 'out' | 'reset') => void; hideCards?: boolean }) {
   const isEmbed = useMemo(() => new URLSearchParams(window.location.search).get("embed") === "true", []);
   const globeEl = useRef<GlobeMethods | undefined>(undefined);
   const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
@@ -284,53 +284,56 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
             </div>
           `;
 
-         el.onpointerdown = (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  
-  if (isCluster) {
-    // In embed mode, send first trek of cluster to parent
-    if (isEmbed) {
-      window.parent.postMessage(
-        {
-          type: "TREK_SELECTED_FROM_GLOBE",
-          payload: { 
-            id: d.treks[0].id,
-            slug: d.treks[0].slug || d.treks[0].id,
-            name: d.treks[0].name 
-          }
-        },
-        "*"
-      );
-      return; // ✅ CRITICAL: Exit early, don't show cards in embed mode
-    }
-    
-    // Only in standalone mode: show cluster cards
-    setSwipeableTreks(d.treks);
-    setInitialTrekIndex(0);
-  } else {
-    // Single trek clicked
-    if (isEmbed) {
-      // In embed mode: send message to parent and EXIT
-      window.parent.postMessage(
-        {
-          type: "TREK_SELECTED_FROM_GLOBE",
-          payload: { 
-            id: d.id,
-            slug: d.slug || d.id,
-            name: d.name 
-          }
-        },
-        "*"
-      );
-      return; // ✅ CRITICAL: Exit early, don't show cards in embed mode
-    }
-    
-    // Only in standalone mode: show single trek card
-    setSwipeableTreks([d]);
-    setInitialTrekIndex(0);
-  }
-};
+          el.onpointerdown = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (isCluster) {
+              // In embed mode, send first trek of cluster to parent
+              if (isEmbed) {
+                console.log('📤 Sending cluster trek to parent:', d.treks[0].id);
+                window.parent.postMessage(
+                  {
+                    type: "TREK_SELECTED_FROM_GLOBE",
+                    payload: { 
+                      id: d.treks[0].id,
+                      slug: d.treks[0].slug || d.treks[0].id,
+                      name: d.treks[0].name 
+                    }
+                  },
+                  "*"
+                );
+                return; // ✅ CRITICAL: Exit early, don't show cards in embed mode
+              }
+              
+              // Only in standalone mode: show cluster cards
+              setSwipeableTreks(d.treks);
+              setInitialTrekIndex(0);
+            } else {
+              // Single trek clicked
+              if (isEmbed) {
+                // In embed mode: send message to parent and EXIT
+                console.log('📤 Sending single trek to parent:', d.id);
+                window.parent.postMessage(
+                  {
+                    type: "TREK_SELECTED_FROM_GLOBE",
+                    payload: { 
+                      id: d.id,
+                      slug: d.slug || d.id,
+                      name: d.name 
+                    }
+                  },
+                  "*"
+                );
+                return; // ✅ CRITICAL: Exit early, don't show cards in embed mode
+              }
+              
+              // Only in standalone mode: show single trek card
+              setSwipeableTreks([d]);
+              setInitialTrekIndex(0);
+            }
+          };
+
           // Sync visibility on mount and anytime altitude changes
           updateVisibility();
           const controls = globeEl.current?.controls();
@@ -339,12 +342,8 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
           return el;
         }}
         
-          onGlobeClick={() => {
+        onGlobeClick={() => {
           setSelectedTrekId(null);
-          // ✅ CRITICAL FIX: Tell the Main App to close the Trek Card
-          if (isEmbed) {
-            window.parent.postMessage({ type: "TREK_DESELECTED_FROM_GLOBE" }, "*");
-          }
         }}
         
         atmosphereColor="#3a228a"
