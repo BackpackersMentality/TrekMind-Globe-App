@@ -285,47 +285,31 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
           `;
 
           el.onpointerdown = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-          onPointClick={(d: any) => {
-          // Check if it's a cluster
-          if (d.properties?.cluster || d.points || d.treks) {
-            // Extract the leaves/points from the cluster
-            const clusterLeaves = d.points || d.treks || d.properties?.points || [];
-            
+           e.preventDefault();
+           e.stopPropagation();
+  
+            // ✅ All logic stays INSIDE the handler
+              if (isCluster) {
+            const clusterLeaves = d.treks || [];
+    
+              if (isEmbed) {
+            window.parent.postMessage({...}, "*");
+          return;
+          }
+    
+             setSwipeableTreks(clusterLeaves);
+             setInitialTrekIndex(0);
+            } else {
+             // Single trek logic
             if (isEmbed) {
-              // Send an array of objects containing the IDs to the Main App
-              window.parent.postMessage(
-                {
-                  type: "TREK_SELECTED_FROM_GLOBE",
-                  payload: clusterLeaves.map((trek: any) => ({ id: trek.id }))
-                },
-                "*"
-              );
-              return; 
-            }
-            
-            // Standalone mode: show swipeable cards
-            setSwipeableTreks(clusterLeaves);
-            setInitialTrekIndex(0);
-          } else {
-            // Single trek clicked
-            if (isEmbed) {
-              window.parent.postMessage(
-                {
-                  type: "TREK_SELECTED_FROM_GLOBE",
-                  payload: { id: d.id, name: d.name }
-                },
-                "*"
-              );
-              return;
-            }
-            // Standalone mode: show single card
+            window.parent.postMessage({...}, "*");
+            return;
+          }
+    
             setSwipeableTreks([d]);
             setInitialTrekIndex(0);
           }
-        }}
+        };
 
           // Sync visibility on mount and anytime altitude changes
           updateVisibility();
