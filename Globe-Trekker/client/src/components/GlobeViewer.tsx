@@ -285,31 +285,57 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
           `;
 
           el.onpointerdown = (e) => {
-           e.preventDefault();
-           e.stopPropagation();
-  
-            // ✅ All logic stays INSIDE the handler
-              if (isCluster) {
-            const clusterLeaves = d.treks || [];
-    
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Check if it's a cluster
+            if (isCluster) {
+              // Extract the leaves/points from the cluster
+              const clusterLeaves = d.treks || [];
+              
               if (isEmbed) {
-            window.parent.postMessage({...}, "*");
-          return;
-          }
-    
-             setSwipeableTreks(clusterLeaves);
-             setInitialTrekIndex(0);
+                console.log('📤 Sending cluster treks to parent:', clusterLeaves.length);
+                // Send first trek of cluster to parent
+                window.parent.postMessage(
+                  {
+                    type: "TREK_SELECTED_FROM_GLOBE",
+                    payload: { 
+                      id: clusterLeaves[0].id,
+                      slug: clusterLeaves[0].slug || clusterLeaves[0].id,
+                      name: clusterLeaves[0].name 
+                    }
+                  },
+                  "*"
+                );
+                return; 
+              }
+              
+              // Standalone mode: show swipeable cards
+              setSwipeableTreks(clusterLeaves);
+              setInitialTrekIndex(0);
             } else {
-             // Single trek logic
-            if (isEmbed) {
-            window.parent.postMessage({...}, "*");
-            return;
-          }
-    
-            setSwipeableTreks([d]);
-            setInitialTrekIndex(0);
-          }
-        };
+              // Single trek clicked
+              if (isEmbed) {
+                console.log('📤 Sending single trek to parent:', d.id);
+                window.parent.postMessage(
+                  {
+                    type: "TREK_SELECTED_FROM_GLOBE",
+                    payload: { 
+                      id: d.id,
+                      slug: d.slug || d.id,
+                      name: d.name 
+                    }
+                  },
+                  "*"
+                );
+                return;
+              }
+              
+              // Standalone mode: show single card
+              setSwipeableTreks([d]);
+              setInitialTrekIndex(0);
+            }
+          };
 
           // Sync visibility on mount and anytime altitude changes
           updateVisibility();
@@ -320,10 +346,9 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
         }}
         
         onGlobeClick={() => {
-          setSelectedTrekId(null); // Clears the globe's active state
+          setSelectedTrekId(null);
           
           if (isEmbed) {
-            // Tells the Main App to close the TrekPreviewPanel
             window.parent.postMessage({ type: "TREK_DESELECTED_FROM_GLOBE" }, "*");
           }
         }}
