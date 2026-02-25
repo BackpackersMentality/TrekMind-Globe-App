@@ -299,10 +299,10 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
                 window.parent.postMessage(
                   {
                     type: "TREK_SELECTED_FROM_GLOBE",
-                    payload: { 
-                      id: clusterLeaves[0].id,
-                      slug: clusterLeaves[0].slug || clusterLeaves[0].id,
-                      name: clusterLeaves[0].name 
+                    payload: clusterLeaves.map(trek => ({
+                      id: trek.id,
+                      slug: trek.slug || trek.id,
+                      name: trek.name
                     }
                   },
                   "*"
