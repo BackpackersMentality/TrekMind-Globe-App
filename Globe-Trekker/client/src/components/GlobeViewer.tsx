@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import Globe from "react-globe.gl";
 import type { GlobeMethods } from "react-globe.gl";
 import { TREKS } from "../data/treks";
@@ -75,100 +75,10 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
           const el = document.createElement('div');
           const isCluster = d.properties?.cluster || d.points || d.treks;
           const pointCount = d.properties?.point_count || (d.points ? d.points.length : null) || (d.treks ? d.treks.length : null);
+          const isSelected = selectedTrekId === (d.id || d.properties?.id);
           
-          // Marker Base Styling
-          el.className = 'cursor-pointer hover:scale-110 transition-transform shadow-lg';
-          el.style.display = 'flex';
-          el.style.alignItems = 'center';
-          el.style.justifyContent = 'center';
-          el.style.color = 'white';
-          el.style.fontWeight = 'bold';
-          el.style.borderRadius = '50%';
-          el.style.border = '2px solid rgba(255,255,255,0.8)';
-          el.style.pointerEvents = 'auto'; // Ensures clicks register
+          el.className = 'cursor-pointer hover:scale-110 transition-transform';
+          el.style.pointerEvents = 'auto'; // Ensures clicks register on the marker
           
           if (isCluster) {
-            el.style.width = '32px';
-            el.style.height = '32px';
-            el.style.backgroundColor = 'rgba(245, 158, 11, 0.9)'; // Amber for clusters
-            el.style.fontSize = '12px';
-            el.innerText = pointCount ? pointCount.toString() : '+';
-          } else {
-            el.style.width = '18px';
-            el.style.height = '18px';
-            el.style.backgroundColor = 'rgba(59, 130, 246, 0.9)'; // Blue for single treks
-            el.title = d.name || 'Trek';
-          }
-
-          // ✅ PREVENT GLOBE DRAG WHEN CLICKING PIN
-          el.onpointerdown = (e) => e.stopPropagation(); 
-          
-          // ✅ THE CLICK HANDLER
-          el.onclick = (e) => {
-            e.stopPropagation(); // Stop click from bleeding through to the ocean
-            
-            if (isCluster) {
-              const clusterLeaves = d.points || d.treks || d.properties?.points || [];
-              
-              if (isEmbed) {
-                // Send an ARRAY of IDs to the Main App
-                window.parent.postMessage({
-                  type: "TREK_SELECTED_FROM_GLOBE",
-                  payload: clusterLeaves.map((trek: any) => ({ 
-                    id: trek.id || trek.properties?.id 
-                  }))
-                }, "*");
-                return; 
-              }
-              
-              setSwipeableTreks(clusterLeaves);
-              setInitialTrekIndex(0);
-              
-            } else {
-              if (isEmbed) {
-                // Wrap single IDs in an ARRAY to standardize the contract
-                window.parent.postMessage({
-                  type: "TREK_SELECTED_FROM_GLOBE",
-                  payload: [{ id: d.id || d.properties?.id }] 
-                }, "*");
-                return;
-              }
-              
-              setSwipeableTreks([d]);
-              setInitialTrekIndex(0);
-            }
-          };
-
-          return el;
-        }}
-        
-        // ✅ CLICKING THE OCEAN CLOSES THE CARD
-        onGlobeClick={() => {
-          setSelectedTrekId(null);
-          if (isEmbed) {
-            window.parent.postMessage({ type: "TREK_DESELECTED_FROM_GLOBE" }, "*");
-          }
-        }}
-        
-        atmosphereColor="#3a228a"
-        atmosphereAltitude={0.15}
-      />
-
-      {!isEmbed && (
-        <ZoomControls
-          onZoomIn={handleZoomIn}
-          onZoomOut={handleZoomOut}
-          onReset={handleReset}
-        />
-      )}
-
-      {swipeableTreks && !hideCards && (
-        <SwipeableTrekCards
-          treks={swipeableTreks}
-          initialIndex={initialTrekIndex}
-          onClose={() => setSwipeableTreks(null)}
-        />
-      )}
-    </div>
-  );
-}
+            el.
