@@ -106,8 +106,8 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
         backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
         
         htmlElementsData={displayData}
-        htmlLat="latitude"
-        htmlLng="longitude"
+        htmlLat={(d: any) => d.lat || d.latitude || (d.geometry && d.geometry.coordinates[1])}
+        htmlLng={(d: any) => d.lng || d.longitude || (d.geometry && d.geometry.coordinates[0])}
         htmlElement={(d: any) => {
           const isCluster = d.isCluster;
           const trekId = isCluster ? null : String(d.id);
