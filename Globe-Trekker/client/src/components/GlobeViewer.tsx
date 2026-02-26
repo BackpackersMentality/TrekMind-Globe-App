@@ -50,12 +50,31 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
   }, [filteredTreks]);
 
   // ✅ NORMALIZE COORDINATES
+  // FIX: Handle both `lat`/`lng` and `latitude`/`longitude` field names
+  // and filter out any items with invalid coordinates so the Globe
+  // doesn't silently drop markers.
   const displayData = useMemo(() => {
-    return clusteredData.map((item: any) => ({
-      ...item,
-      lat: item.latitude,
-      lng: item.longitude,
-    }));
+    return clusteredData
+      .map((item: any) => {
+        const lat = item.lat ?? item.latitude;
+        const lng = item.lng ?? item.longitude;
+        return {
+          ...item,
+          lat,
+          lng,
+        };
+      })
+      .filter((item: any) => {
+        const valid =
+          typeof item.lat === "number" &&
+          typeof item.lng === "number" &&
+          !isNaN(item.lat) &&
+          !isNaN(item.lng);
+        if (!valid) {
+          console.warn("[GlobeViewer] Dropping marker with invalid coords:", item);
+        }
+        return valid;
+      });
   }, [clusteredData]);
 
   return (
@@ -93,7 +112,7 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
                 border:2px solid white;
                 box-shadow:0 4px 10px rgba(0,0,0,0.5);
               ">
-                ${d.treks.length}
+                ${d.treks?.length ?? "?"}
               </div>
             `;
           } else {
