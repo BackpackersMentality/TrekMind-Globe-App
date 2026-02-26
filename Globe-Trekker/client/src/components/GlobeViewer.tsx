@@ -12,9 +12,8 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
   const isEmbed = useMemo(() => new URLSearchParams(window.location.search).get("embed") === "true", []);
   const globeEl = useRef<GlobeMethods | undefined>(undefined);
   const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
-  const [altitude, setAltitude] = useState(2.5);
   const { selectedTrekId, setSelectedTrekId } = useTrekStore();
-  const { continent, accommodation, length, tier } = useFilterStore();
+  const { continent, tier } = useFilterStore();
   const [swipeableTreks, setSwipeableTreks] = useState<any[] | null>(null);
   const [initialTrekIndex, setInitialTrekIndex] = useState(0);
 
@@ -36,39 +35,21 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
 
   // Cluster Logic
   const displayData = useMemo(() => {
-    if (altitude < 1.0) return filteredTreks; // Show all treks when zoomed in
-    return typeof clusterTreks === 'function' ? clusterTreks(filteredTreks, 100) : filteredTreks;
-  }, [filteredTreks, altitude]);
-
-  // Update altitude
-  const updateAltitude = () => {
-    if (!globeEl.current) return;
-    const camera = globeEl.current.camera();
-    const globeRadius = globeEl.current.getGlobeRadius();
-    if (!camera || !globeRadius) return;
-    const currentAltitude = camera.position.length() / globeRadius;
-    setAltitude(currentAltitude);
-  };
-
-  useEffect(() => {
-    const controls = globeEl.current?.controls();
-    if (!controls) return;
-    controls.addEventListener("change", updateAltitude);
-    return () => controls.removeEventListener("change", updateAltitude);
-  }, []);
+    return typeof clusterTreks === 'function' ? clusterTreks(filteredTreks) : filteredTreks;
+  }, [filteredTreks]);
 
   // Zoom Controls
   const handleZoomIn = () => {
     if (globeEl.current) {
       const currentAlt = globeEl.current.pointOfView().altitude;
-      globeEl.current.pointOfView({ altitude: Math.max(0.1, currentAlt - 0.2) }, 500);
+      globeEl.current.pointOfView({ altitude: Math.max(0.1, currentAlt - 0.5) }, 500);
     }
   };
 
   const handleZoomOut = () => {
     if (globeEl.current) {
       const currentAlt = globeEl.current.pointOfView().altitude;
-      globeEl.current.pointOfView({ altitude: Math.min(4, currentAlt + 0.2) }, 500);
+      globeEl.current.pointOfView({ altitude: Math.min(4, currentAlt + 0.5) }, 500);
     }
   };
 
@@ -78,25 +59,16 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
     }
   };
 
-  // Globe configuration
-  useEffect(() => {
-    if (globeEl.current) {
-      globeEl.current.controls().autoRotate = false;
-      globeEl.current.controls().enableDamping = true;
-      
-      if (isEmbed) {
-        globeEl.current.controls().minPolarAngle = Math.PI / 4;
-        globeEl.current.controls().maxPolarAngle = Math.PI * 3 / 4;
-        globeEl.current.controls().minDistance = 150;
-        globeEl.current.controls().maxDistance = 600;
-      }
-
-      globeEl.current.pointOfView({ altitude: 2.5 }, 0);
-    }
-  }, [isEmbed]);
-
   return (
     <div className="absolute inset-0 bg-[#0a0a1a] overflow-hidden">
+      {/* Inject Keyframes for the glowing ping effect */}
+      <style>{`
+        @keyframes custom-ping {
+          0% { transform: scale(1); opacity: 0.8; }
+          75%, 100% { transform: scale(2.5); opacity: 0; }
+        }
+      `}</style>
+
       <Globe
         ref={globeEl as any}
         width={dimensions.width}
@@ -105,90 +77,94 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
         bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
         backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
         
+        // 1. DATA SOURCE
         htmlElementsData={displayData}
-        htmlLat={(d: any) => d.lat || d.latitude || (d.geometry && d.geometry.coordinates[1])}
-        htmlLng={(d: any) => d.lng || d.longitude || (d.geometry && d.geometry.coordinates[0])}
+        
+        // 2. CRITICAL FIX: EXPLICITLY FIND COORDINATES
+        htmlLat={(d: any) => {
+          if (d.latitude !== undefined) return d.latitude;
+          if (d.geometry?.coordinates) return d.geometry.coordinates[1];
+          if (d.properties?.latitude) return d.properties.latitude;
+          return d.lat || 0;
+        }}
+        htmlLng={(d: any) => {
+          if (d.longitude !== undefined) return d.longitude;
+          if (d.geometry?.coordinates) return d.geometry.coordinates[0];
+          if (d.properties?.longitude) return d.properties.longitude;
+          return d.lng || 0;
+        }}
+        
+        // 3. DRAW THE MARKERS
         htmlElement={(d: any) => {
-          const isCluster = d.isCluster;
-          const trekId = isCluster ? null : String(d.id);
-          const isSelected = trekId && String(trekId) === String(selectedTrekId);
-          
           const el = document.createElement('div');
-          el.className = `group relative cursor-pointer flex flex-col items-center justify-center pointer-events-auto ${isSelected ? 'pin-selected' : ''}`;
           
-          // Cluster badge
-          const clusterBadge = isCluster ? `
-            <div class="absolute -top-1 -right-1 bg-white text-primary text-[8px] font-bold px-1 rounded-full border border-primary shadow-sm">
-              +${d.treks.length - 1}
-            </div>
-          ` : '';
-
-          el.innerHTML = `
-            <div class="relative flex flex-col items-center transition-all duration-300 transform ${isSelected ? 'scale-125' : 'group-hover:scale-110'}">
-              <!-- Pin Head -->
-              <div class="w-6 h-6 rounded-full ${isCluster ? 'bg-white' : 'bg-primary'} border-2 ${isCluster ? 'border-primary' : 'border-white'} shadow-[0_0_10px_rgba(59,130,246,0.5)] flex items-center justify-center">
-                 <div class="w-1.5 h-1.5 rounded-full ${isCluster ? 'bg-primary' : 'bg-white'} opacity-40"></div>
+          const isCluster = d.properties?.cluster || d.points || d.treks;
+          const pointCount = d.properties?.point_count || (d.points ? d.points.length : null) || (d.treks ? d.treks.length : null);
+          
+          // Safely extract the exact trek data whether it's raw or inside a GeoJSON property
+          const rawTrek = d.properties?.trek || d.properties || d;
+          const trekId = rawTrek.id || rawTrek.slug;
+          const isSelected = selectedTrekId === trekId;
+          
+          el.style.pointerEvents = 'auto';
+          el.style.cursor = 'pointer';
+          el.style.transform = isSelected ? 'scale(1.4)' : 'scale(1)';
+          el.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+          
+          if (isCluster) {
+            // CLUSTER
+            el.innerHTML = `
+              <div style="width: 32px; height: 32px; background-color: rgba(245, 158, 11, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                ${pointCount}
               </div>
-              ${clusterBadge}
-              <!-- Pin Stem -->
-              <div class="w-1 h-2 ${isCluster ? 'bg-white' : 'bg-primary'} -mt-0.5 shadow-sm rounded-b-full"></div>
-              <!-- Pin Shadow -->
-              <div class="w-3 h-1 bg-black/20 rounded-full blur-[1px] mt-0.5"></div>
-              
-              <!-- Label -->
-              <div class="trek-label opacity-0 group-hover:opacity-100 transition-opacity absolute top-8 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap pointer-events-none">
-                ${isCluster ? `${d.treks[0].name} & More` : d.name}
-              </div>
-            </div>
-          `;
+            `;
+          } else {
+            // SINGLE TREK (With glowing aura)
+            const difficulty = rawTrek.difficulty || "Moderate";
+            let color = "#3b82f6";
+            if (difficulty === "Easy") color = "#22c55e";
+            else if (difficulty === "Hard") color = "#f97316";
+            else if (difficulty === "Extreme") color = "#ef4444";
 
-          el.onpointerdown = (e) => {
-            e.preventDefault();
+            el.innerHTML = `
+              <div style="position: relative; width: 16px; height: 16px;">
+                <div style="position: absolute; inset: -4px; border-radius: 50%; background-color: ${color}; opacity: ${isSelected ? '0.7' : '0.4'}; animation: custom-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+                <div style="position: absolute; inset: 0; border-radius: 50%; background-color: ${color}; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
+              </div>
+            `;
+            el.title = rawTrek.name || 'Trek';
+          }
+
+          // Stop drag logic from stealing clicks
+          el.onpointerdown = (e) => e.stopPropagation(); 
+          
+          // 4. CLICK LOGIC (Always sending an Array format to Main App)
+          el.onclick = (e) => {
             e.stopPropagation();
+            setSelectedTrekId(trekId);
             
             if (isCluster) {
-              const clusterLeaves = d.treks || [];
-              
+              const clusterLeaves = d.points || d.treks || d.properties?.points || [];
               if (isEmbed) {
-                console.log('📤 Sending cluster to parent:', clusterLeaves.length, 'treks');
-                // Send full array to parent
-                window.parent.postMessage(
-                  {
-                    type: "TREK_SELECTED_FROM_GLOBE",
-                    payload: clusterLeaves.map((trek: any) => ({
-                      id: trek.id,
-                      slug: trek.slug || trek.id,
-                      name: trek.name
-                    }))
-                  },
-                  "*"
-                );
-                return;
+                window.parent.postMessage({
+                  type: "TREK_SELECTED_FROM_GLOBE",
+                  payload: clusterLeaves.map((t: any) => {
+                    const leafTrek = t.properties?.trek || t.properties || t;
+                    return { id: leafTrek.id || leafTrek.slug };
+                  })
+                }, "*");
+                return; 
               }
-              
-              // Standalone mode: show swipeable cards
               setSwipeableTreks(clusterLeaves);
               setInitialTrekIndex(0);
             } else {
-              // Single trek clicked
               if (isEmbed) {
-                console.log('📤 Sending single trek to parent:', d.id);
-                // Wrap single trek in array for consistency
-                window.parent.postMessage(
-                  {
-                    type: "TREK_SELECTED_FROM_GLOBE",
-                    payload: [{
-                      id: d.id,
-                      slug: d.slug || d.id,
-                      name: d.name
-                    }]
-                  },
-                  "*"
-                );
+                window.parent.postMessage({
+                  type: "TREK_SELECTED_FROM_GLOBE",
+                  payload: [{ id: trekId }] // ✅ Wrapping single ID in Array for Swiping Panel
+                }, "*");
                 return;
               }
-              
-              // Standalone mode: show single card
               setSwipeableTreks([d]);
               setInitialTrekIndex(0);
             }
@@ -199,7 +175,6 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
         
         onGlobeClick={() => {
           setSelectedTrekId(null);
-          
           if (isEmbed) {
             window.parent.postMessage({ type: "TREK_DESELECTED_FROM_GLOBE" }, "*");
           }
@@ -218,7 +193,7 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
         />
       )}
 
-      {/* Swipeable trek cards */}
+      {/* Swipeable trek cards for standalone globe app */}
       {swipeableTreks && !hideCards && (
         <SwipeableTrekCards
           treks={swipeableTreks}
