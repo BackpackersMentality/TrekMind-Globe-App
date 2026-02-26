@@ -17,51 +17,30 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
   const [swipeableTreks, setSwipeableTreks] = useState<any[] | null>(null);
   const [initialTrekIndex, setInitialTrekIndex] = useState(0);
 
-  // Handle Window Resize
   useEffect(() => {
     const handleResize = () => setDimensions({ width: window.innerWidth, height: window.innerHeight });
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Filter Logic
   const filteredTreks = useMemo(() => {
-    return TREKS.filter(trek => {
+    const result = TREKS.filter(trek => {
       if (continent && continent !== "All" && trek.region !== continent) return false;
       if (tier && tier !== "All" && trek.tier !== parseInt(tier)) return false;
       return true;
     });
+    console.log("Filtered Treks Count:", result.length);
+    return result;
   }, [continent, tier]);
 
-  // Cluster Logic
   const displayData = useMemo(() => {
-    return typeof clusterTreks === 'function' ? clusterTreks(filteredTreks) : filteredTreks;
+    const clustered = typeof clusterTreks === 'function' ? clusterTreks(filteredTreks) : filteredTreks;
+    console.log("Display Data (Markers/Clusters):", clustered);
+    return clustered;
   }, [filteredTreks]);
-
-  // Zoom Controls
-  const handleZoomIn = () => {
-    if (globeEl.current) {
-      const currentAlt = globeEl.current.pointOfView().altitude;
-      globeEl.current.pointOfView({ altitude: Math.max(0.1, currentAlt - 0.5) }, 500);
-    }
-  };
-
-  const handleZoomOut = () => {
-    if (globeEl.current) {
-      const currentAlt = globeEl.current.pointOfView().altitude;
-      globeEl.current.pointOfView({ altitude: Math.min(4, currentAlt + 0.5) }, 500);
-    }
-  };
-
-  const handleReset = () => {
-    if (globeEl.current) {
-      globeEl.current.pointOfView({ lat: 20, lng: 0, altitude: 2.5 }, 1000);
-    }
-  };
 
   return (
     <div className="absolute inset-0 bg-[#0a0a1a] overflow-hidden">
-      {/* Inject Keyframes for the glowing ping effect */}
       <style>{`
         @keyframes custom-ping {
           0% { transform: scale(1); opacity: 0.8; }
@@ -77,50 +56,35 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
         bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
         backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
         
-        // 1. DATA SOURCE
         htmlElementsData={displayData}
         
-        // 2. CRITICAL FIX: EXPLICITLY FIND COORDINATES
-        htmlLat={(d: any) => {
-          if (d.latitude !== undefined) return d.latitude;
-          if (d.geometry?.coordinates) return d.geometry.coordinates[1];
-          if (d.properties?.latitude) return d.properties.latitude;
-          return d.lat || 0;
-        }}
-        htmlLng={(d: any) => {
-          if (d.longitude !== undefined) return d.longitude;
-          if (d.geometry?.coordinates) return d.geometry.coordinates[0];
-          if (d.properties?.longitude) return d.properties.longitude;
-          return d.lng || 0;
-        }}
+        // ✅ CRITICAL FIX: The Globe needs to know where the numbers are
+        htmlLat={(d: any) => d.latitude || d.lat || (d.geometry?.coordinates?.[1])}
+        htmlLng={(d: any) => d.longitude || d.lng || (d.geometry?.coordinates?.[0])}
         
-        // 3. DRAW THE MARKERS
         htmlElement={(d: any) => {
           const el = document.createElement('div');
           
           const isCluster = d.properties?.cluster || d.points || d.treks;
-          const pointCount = d.properties?.point_count || (d.points ? d.points.length : null) || (d.treks ? d.treks.length : null);
+          const pointCount = d.properties?.point_count || (d.points?.length) || (d.treks?.length);
           
-          // Safely extract the exact trek data whether it's raw or inside a GeoJSON property
-          const rawTrek = d.properties?.trek || d.properties || d;
-          const trekId = rawTrek.id || rawTrek.slug;
+          // Data Resolution
+          const trekData = d.properties || d;
+          const trekId = trekData.id || trekData.slug || d.id;
           const isSelected = selectedTrekId === trekId;
           
           el.style.pointerEvents = 'auto';
           el.style.cursor = 'pointer';
-          el.style.transform = isSelected ? 'scale(1.4)' : 'scale(1)';
-          el.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+          el.className = 'globe-marker-node';
           
           if (isCluster) {
-            // CLUSTER
             el.innerHTML = `
-              <div style="width: 32px; height: 32px; background-color: rgba(245, 158, 11, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+              <div style="width: 32px; height: 32px; background: #f59e0b; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; border: 2px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
                 ${pointCount}
               </div>
             `;
           } else {
-            // SINGLE TREK (With glowing aura)
-            const difficulty = rawTrek.difficulty || "Moderate";
+            const difficulty = trekData.difficulty || "Moderate";
             let color = "#3b82f6";
             if (difficulty === "Easy") color = "#22c55e";
             else if (difficulty === "Hard") color = "#f97316";
@@ -128,19 +92,16 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
 
             el.innerHTML = `
               <div style="position: relative; width: 16px; height: 16px;">
-                <div style="position: absolute; inset: -4px; border-radius: 50%; background-color: ${color}; opacity: ${isSelected ? '0.7' : '0.4'}; animation: custom-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-                <div style="position: absolute; inset: 0; border-radius: 50%; background-color: ${color}; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
+                <div style="position: absolute; inset: -4px; border-radius: 50%; background: ${color}; opacity: 0.4; animation: custom-ping 2s infinite;"></div>
+                <div style="position: absolute; inset: 0; border-radius: 50%; background: ${color}; border: 2px solid white; box-shadow: 0 0 10px ${color}88;"></div>
               </div>
             `;
-            el.title = rawTrek.name || 'Trek';
           }
 
-          // Stop drag logic from stealing clicks
-          el.onpointerdown = (e) => e.stopPropagation(); 
-          
-          // 4. CLICK LOGIC (Always sending an Array format to Main App)
+          // Click Handling
           el.onclick = (e) => {
             e.stopPropagation();
+            console.log("Marker clicked:", trekId);
             setSelectedTrekId(trekId);
             
             if (isCluster) {
@@ -148,25 +109,20 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
               if (isEmbed) {
                 window.parent.postMessage({
                   type: "TREK_SELECTED_FROM_GLOBE",
-                  payload: clusterLeaves.map((t: any) => {
-                    const leafTrek = t.properties?.trek || t.properties || t;
-                    return { id: leafTrek.id || leafTrek.slug };
-                  })
+                  payload: clusterLeaves.map((t: any) => ({ id: t.id || t.properties?.id }))
                 }, "*");
-                return; 
+              } else {
+                setSwipeableTreks(clusterLeaves);
               }
-              setSwipeableTreks(clusterLeaves);
-              setInitialTrekIndex(0);
             } else {
               if (isEmbed) {
                 window.parent.postMessage({
                   type: "TREK_SELECTED_FROM_GLOBE",
-                  payload: [{ id: trekId }] // ✅ Wrapping single ID in Array for Swiping Panel
+                  payload: [{ id: trekId }]
                 }, "*");
-                return;
+              } else {
+                setSwipeableTreks([d]);
               }
-              setSwipeableTreks([d]);
-              setInitialTrekIndex(0);
             }
           };
 
@@ -184,16 +140,6 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
         atmosphereAltitude={0.15}
       />
 
-      {/* Zoom Controls */}
-      {!isEmbed && (
-        <ZoomControls
-          onZoomIn={handleZoomIn}
-          onZoomOut={handleZoomOut}
-          onReset={handleReset}
-        />
-      )}
-
-      {/* Swipeable trek cards for standalone globe app */}
       {swipeableTreks && !hideCards && (
         <SwipeableTrekCards
           treks={swipeableTreks}
@@ -204,3 +150,4 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
     </div>
   );
 }
+  
