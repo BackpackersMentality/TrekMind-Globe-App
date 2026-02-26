@@ -345,9 +345,16 @@ export function GlobeViewer({ onZoom, hideCards }: { onZoom?: (direction: 'in' |
           return el;
         }}
         
+// ✅ CLICKING THE OCEAN CLOSES THE CARD
         onGlobeClick={() => {
           setSelectedTrekId(null);
-          
+          if (isEmbed) {
+            window.parent.postMessage({ type: "TREK_DESELECTED_FROM_GLOBE" }, "*");
+          }
+        }}
+        // Just in case users drag and accidentally right-click
+        onGlobeRightClick={() => {
+          setSelectedTrekId(null);
           if (isEmbed) {
             window.parent.postMessage({ type: "TREK_DESELECTED_FROM_GLOBE" }, "*");
           }
