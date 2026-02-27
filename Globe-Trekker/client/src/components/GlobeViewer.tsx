@@ -21,11 +21,69 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
   });
 
   const { selectedTrekId, setSelectedTrekId } = useTrekStore();
-  const { continent, tier } = useFilterStore();
+
+  // Read filters from the store (used when NOT embedded)
+  const { continent, tier, setContinent, setTier } = useFilterStore();
+
+  // When embedded in the main app, override store values with postMessage data
+  // so both apps stay in sync without sharing state directly.
+  const [embedFilters, setEmbedFilters] = useState<{
+    continent: string;
+    tier: string;
+    region: string;
+    accommodation: string;
+    duration: string;
+    difficulty: string;
+  } | null>(null);
 
   const [swipeableTreks, setSwipeableTreks] = useState<any[] | null>(null);
   const setSwipeableRef = useRef(setSwipeableTreks);
   useEffect(() => { setSwipeableRef.current = setSwipeableTreks; }, []);
+
+  // ── FIX: Listen for filter + zoom postMessages from the parent app ────────────
+  // Previously GlobeViewer had NO message listener, so filter updates sent by
+  // GlobeIntegration via postMessage were completely ignored by the iframe.
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const { type, payload } = event.data || {};
+
+      if (type === "TREKMIND_FILTER_UPDATE" && payload) {
+        // Normalise the tier value — the main app sends "Tier 1" / "Tier 2" / "ALL"
+        // but we need a plain number or "ALL" for filtering trek.tier (which is 1/2/3).
+        const rawTier = payload.tier ?? "ALL";
+        const normalisedTier =
+          rawTier === "ALL" ? "ALL"
+          : String(rawTier).match(/\d+/)
+            ? String(rawTier).match(/\d+/)![0]   // "Tier 1" → "1", "1" → "1"
+            : "ALL";
+
+        // Region in the main app maps to continent in the globe app
+        const normalisedContinent = payload.region ?? payload.continent ?? "ALL";
+
+        setEmbedFilters({
+          continent: normalisedContinent,
+          tier: normalisedTier,
+          region: normalisedContinent,
+          accommodation: payload.accommodation ?? "ALL",
+          duration: payload.duration ?? "ALL",
+          difficulty: payload.difficulty ?? "ALL",
+        });
+      }
+
+      if (type === "TREKMIND_ZOOM_IN") {
+        const camera = (globeEl.current as any)?.camera?.();
+        if (camera) camera.position.multiplyScalar(0.85);
+      }
+
+      if (type === "TREKMIND_ZOOM_OUT") {
+        const camera = (globeEl.current as any)?.camera?.();
+        if (camera) camera.position.multiplyScalar(1.15);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
 
   useEffect(() => {
     const handleResize = () =>
@@ -34,18 +92,37 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ✅ FIX: Store uses "ALL" (uppercase). Old code checked !== "All" (mixed case).
-  // "ALL" !== "All" is always true, so BOTH filters fired on every trek,
-  // returning false for everything → filteredTreks was always [] → no markers.
+  // ── Resolve which filter values to actually use ───────────────────────────────
+  // When embedded: use the values received via postMessage (embedFilters).
+  // When standalone: use the local filterStore values.
+  const activeContinent = isEmbed
+    ? (embedFilters?.continent ?? "ALL")
+    : (continent ?? "ALL");
+
+  const activeTier = isEmbed
+    ? (embedFilters?.tier ?? "ALL")
+    : (tier ?? "ALL");
+
+  // ── FIX: Tier comparison now handles both "1" and "Tier 1" formats ───────────
+  // Old code: trek.tier !== parseInt(tier)
+  //   parseInt("Tier 1") = NaN → trek.tier !== NaN is always true → everything filtered out
+  //   parseInt("ALL") = NaN → same problem
+  // New code: extract the digit from any format, compare numerically
   const filteredTreks = useMemo(() => {
     return TREKS.filter((trek: any) => {
-      if (continent && continent !== "ALL" && trek.region !== continent)
+      // Continent / region filter
+      if (activeContinent && activeContinent !== "ALL" && trek.region !== activeContinent)
         return false;
-      if (tier && tier !== "ALL" && trek.tier !== parseInt(tier))
-        return false;
+
+      // Tier filter — safely parse "1", "Tier 1", "Tier 2" etc.
+      if (activeTier && activeTier !== "ALL") {
+        const tierNum = parseInt(String(activeTier).replace(/\D/g, ""), 10);
+        if (!isNaN(tierNum) && trek.tier !== tierNum) return false;
+      }
+
       return true;
     });
-  }, [continent, tier]);
+  }, [activeContinent, activeTier]);
 
   const clusteredData = useMemo(() => {
     return clusterTreks(filteredTreks, 250);
@@ -70,37 +147,68 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     (d: any) => {
       const isCluster = d.isCluster;
       const trekId = d.id;
-      const size = isCluster ? 36 : 20;
+      const trekName = d.name || "";
+
+      const dotSize = isCluster ? 36 : 18;
+      const hitSize = isCluster ? 56 : 52;
+      const hitOffset = hitSize / 2;
 
       const el = document.createElement("div");
-      el.style.width = `${size}px`;
-      el.style.height = `${size}px`;
-      el.style.marginLeft = `-${size / 2}px`;
-      el.style.marginTop = `-${size / 2}px`;
-      el.style.pointerEvents = "auto";
-      el.style.cursor = "pointer";
+      el.style.cssText = `
+        width:${hitSize}px; height:${hitSize}px;
+        margin-left:-${hitOffset}px; margin-top:-${hitOffset}px;
+        pointer-events:auto; cursor:pointer;
+        display:flex; align-items:center; justify-content:center;
+        position:relative;
+      `;
 
       if (isCluster) {
         el.innerHTML = `
           <div style="
-            width:${size}px; height:${size}px;
+            width:${dotSize}px; height:${dotSize}px;
             background:#f59e0b; border-radius:50%;
             display:flex; align-items:center; justify-content:center;
             color:white; font-size:13px; font-weight:bold;
-            border:2px solid white; box-shadow:0 4px 10px rgba(0,0,0,0.5);
+            border:2px solid white; box-shadow:0 4px 12px rgba(0,0,0,0.6);
+            transition:transform 0.15s;
           ">${d.treks?.length ?? "?"}</div>
         `;
       } else {
+        const shortName = trekName.length > 18
+          ? trekName.slice(0, 16).trimEnd() + "…"
+          : trekName;
+
         el.innerHTML = `
-          <div style="
-            width:${size}px; height:${size}px;
-            border-radius:50%; background:#3b82f6;
-            border:2px solid white; box-shadow:0 0 10px rgba(59,130,246,0.8);
-          "></div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:3px; pointer-events:none;">
+            <div style="
+              background:rgba(0,0,0,0.65); backdrop-filter:blur(4px);
+              color:white; font-size:10px; font-weight:600; line-height:1.2;
+              padding:2px 6px; border-radius:4px; white-space:nowrap;
+              max-width:120px; overflow:hidden; text-overflow:ellipsis;
+              letter-spacing:0.01em; box-shadow:0 1px 4px rgba(0,0,0,0.5);
+              pointer-events:none;
+            ">${shortName}</div>
+            <div style="
+              width:${dotSize}px; height:${dotSize}px;
+              border-radius:50%; background:#3b82f6;
+              border:2px solid white; box-shadow:0 0 10px rgba(59,130,246,0.9);
+              transition:transform 0.15s, box-shadow 0.15s;
+            "></div>
+          </div>
         `;
       }
 
-      el.onclick = (e) => {
+      const dot = el.querySelector("div > div:last-child") as HTMLElement | null;
+      el.onmouseenter = () => {
+        if (dot) { dot.style.transform = "scale(1.5)"; dot.style.boxShadow = "0 0 18px rgba(59,130,246,1)"; }
+      };
+      el.onmouseleave = () => {
+        if (dot) { dot.style.transform = "scale(1)"; dot.style.boxShadow = "0 0 10px rgba(59,130,246,0.9)"; }
+      };
+
+      // pointerdown fires immediately on press — fixes the "flashing card" issue
+      // where onclick required a full press-and-release cycle before registering
+      el.onpointerdown = (e) => {
         e.stopPropagation();
         setSelectedTrekId(trekId);
 
