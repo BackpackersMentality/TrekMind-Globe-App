@@ -17,8 +17,6 @@
     "imageFilename": "av1",
     "season": "June-September",
     "popularityScore": 8
-    "difficulty": "Moderate",
-    "durationBucket": "Medium"
   },
   {
     "id": "haute_route",
@@ -39,8 +37,6 @@
     "terrain": "High alpine",
     "season": "June-September",
     "popularityScore": 10
-    "difficulty": "Moderate",
-    "durationBucket": "Medium"
   },
   {
     "id": "abc",
