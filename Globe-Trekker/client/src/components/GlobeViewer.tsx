@@ -7,7 +7,6 @@ import { useFilterStore } from "../store/useFilterStore";
 import { SwipeableTrekCards } from "./SwipeableTrekCards";
 import { clusterTreks } from "../lib/clustering";
 
-// ── Category helpers (mirrors main app filterTreks.ts) ────────────────────────
 function getAccommodationCategory(raw: string = ""): string {
   const a = raw.toLowerCase();
   if (a.includes("teahouse")) return "Teahouses";
@@ -55,18 +54,48 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     []
   );
 
-  const globeEl = useRef<GlobeMethods | undefined>(undefined);
+  const globeEl      = useRef<GlobeMethods | undefined>(undefined);
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  // ── FIX: Use container's actual rendered size, not window dimensions ────────
+  // When embedded in an iframe, window.innerWidth/Height = the iframe viewport.
+  // But react-globe.gl's HTML marker projection is calibrated to the Globe
+  // component's width/height props. If these don't exactly match the rendered
+  // container (e.g. due to CSS transforms, scrollbars, or parent constraints),
+  // markers drift off their geographic positions — especially at low zoom where
+  // even small pixel offsets are magnified.
+  // ResizeObserver tracks the exact rendered container size in real time.
   const [dimensions, setDimensions] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
   });
 
-  const { selectedTrekId, setSelectedTrekId } = useTrekStore();
-  const { continent, tier, setContinent, setTier } = useFilterStore();
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-  // ── Multi-select filter state from parent postMessage ─────────────────────
-  // Each field is now an array (empty = show all). Matches main app FilterState.
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          setDimensions({ width, height });
+        }
+      }
+    });
+
+    ro.observe(container);
+    // Set initial size immediately
+    const rect = container.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      setDimensions({ width: rect.width, height: rect.height });
+    }
+
+    return () => ro.disconnect();
+  }, []);
+
+  const { selectedTrekId, setSelectedTrekId } = useTrekStore();
+  const { continent, tier } = useFilterStore();
+
   const [embedFilters, setEmbedFilters] = useState<{
     tier:          string[];
     region:        string[];
@@ -80,20 +109,16 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
   const setSwipeableRef = useRef(setSwipeableTreks);
   useEffect(() => { setSwipeableRef.current = setSwipeableTreks; }, []);
 
-  // ── postMessage listener ──────────────────────────────────────────────────
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       const { type, payload } = event.data || {};
 
       if (type === "TREKMIND_FILTER_UPDATE" && payload) {
-        // Main app now sends arrays for each filter field.
-        // Normalise: accept both old string format and new array format.
         const normalise = (val: any): string[] => {
           if (Array.isArray(val)) return val;
           if (!val || val === "ALL") return [];
           return [String(val)];
         };
-
         setEmbedFilters({
           tier:          normalise(payload.tier),
           region:        normalise(payload.region ?? payload.continent),
@@ -118,19 +143,9 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
-  useEffect(() => {
-    const handleResize = () =>
-      setDimensions({ width: window.innerWidth, height: window.innerHeight });
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // ── Apply filters — multi-select arrays, empty = show all ─────────────────
   const filteredTreks = useMemo(() => {
     const f = embedFilters;
     return TREKS.filter((trek: any) => {
-
-      // Tier
       if (f?.tier?.length) {
         const nums = f.tier.map(t => parseInt(String(t).replace(/\D/g, ""), 10));
         if (!nums.includes(trek.tier)) return false;
@@ -138,34 +153,23 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
         const tierNum = parseInt(String(tier).replace(/\D/g, ""), 10);
         if (!isNaN(tierNum) && trek.tier !== tierNum) return false;
       }
-
-      // Region
       if (f?.region?.length) {
         if (!f.region.includes(trek.region)) return false;
       } else if (!isEmbed && continent && continent !== "ALL") {
         if (trek.region !== continent) return false;
       }
-
-      // Accommodation
       if (f?.accommodation?.length) {
         if (!f.accommodation.includes(getAccommodationCategory(trek.accommodation))) return false;
       }
-
-      // Terrain
       if (f?.terrain?.length) {
         if (!f.terrain.includes(getTerrainCategory(trek.terrain))) return false;
       }
-
-      // Duration
       if (f?.duration?.length) {
         if (!f.duration.includes(getDurationBucket(trek.totalDays))) return false;
       }
-
-      // Popularity
       if (f?.popularity?.length) {
         if (!f.popularity.includes(getPopularityBucket(trek.popularityScore))) return false;
       }
-
       return true;
     });
   }, [embedFilters, isEmbed, continent, tier]);
@@ -190,18 +194,11 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
   const htmlElementCallback = useCallback(
     (d: any) => {
       const isCluster = d.isCluster;
-      const trekId = d.id;
-      const trekName = d.name || "";
+      const trekId    = d.id;
+      const trekName  = d.name || "";
 
-      const dotSize = isCluster ? 32 : 14;
-      // ── FIX 1: Hit area sized around dot only, not label ─────────────────
-      // Previously: hitSize included space for the label above the dot,
-      // so the negative-margin centering was anchoring to the middle of the
-      // whole flex column (label+dot), not the dot itself. This made the dot
-      // appear above its actual geographic position.
-      // Now: the outer div is exactly dotSize square, so negative margins
-      // correctly centre the dot on the coordinate point.
-      const hitSize = dotSize + 20; // small touch target around dot only
+      const dotSize  = isCluster ? 32 : 14;
+      const hitSize  = dotSize + 20;
       const hitOffset = hitSize / 2;
 
       const el = document.createElement("div");
@@ -221,8 +218,7 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
             display:flex; align-items:center; justify-content:center;
             color:white; font-size:12px; font-weight:700;
             border:2px solid white; box-shadow:0 4px 12px rgba(0,0,0,0.6);
-            transition:transform 0.15s;
-            pointer-events:none;
+            transition:transform 0.15s; pointer-events:none;
           ">${d.treks?.length ?? "?"}</div>
         `;
       } else {
@@ -230,11 +226,6 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
           ? trekName.slice(0, 16).trimEnd() + "…"
           : trekName;
 
-        // ── FIX 2: Label uses text-shadow for readability, NO background box ─
-        // Original had background:rgba(0,0,0,0.65) which created the rectangle.
-        // Text-shadow gives the same contrast without the box.
-        // Label is positioned absolutely ABOVE the dot, outside the hit area,
-        // so it doesn't affect marker positioning.
         el.innerHTML = `
           <div style="
             position:absolute;
@@ -243,7 +234,6 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
             white-space:nowrap;
             color:white; font-size:10px; font-weight:600; line-height:1.2;
             text-shadow:0 1px 3px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.8);
-            letter-spacing:0.01em;
             pointer-events:none;
           ">${shortName}</div>
           <div style="
@@ -257,7 +247,6 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
       }
 
       const dot = el.querySelector("div:last-child") as HTMLElement | null;
-
       el.onmouseenter = () => {
         if (dot) {
           dot.style.transform = "scale(1.6)";
@@ -278,7 +267,6 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
       el.onpointerdown = (e) => {
         e.stopPropagation();
         setSelectedTrekId(trekId);
-
         if (isCluster) {
           if (isEmbed) {
             window.parent.postMessage(
@@ -306,7 +294,7 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
   );
 
   return (
-    <div className="absolute inset-0 bg-[#0a0a1a]" style={{ overflow: "visible" }}>
+    <div ref={containerRef} className="absolute inset-0 bg-[#0a0a1a]" style={{ overflow: "visible" }}>
       <Globe
         ref={globeEl as any}
         width={dimensions.width}
@@ -320,7 +308,6 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
         htmlAltitude={0}
         htmlElement={htmlElementCallback}
         onGlobeClick={() => {
-          // ── FIX 3: Ocean click closes panel in both embedded and standalone ──
           setSelectedTrekId(null);
           setSwipeableTreks(null);
           if (isEmbed) {
