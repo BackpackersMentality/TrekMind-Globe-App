@@ -7,6 +7,48 @@ import { useFilterStore } from "../store/useFilterStore";
 import { SwipeableTrekCards } from "./SwipeableTrekCards";
 import { clusterTreks } from "../lib/clustering";
 
+// ── Category helpers (mirrors main app filterTreks.ts) ────────────────────────
+function getAccommodationCategory(raw: string = ""): string {
+  const a = raw.toLowerCase();
+  if (a.includes("teahouse")) return "Teahouses";
+  if (a.includes("rifugio") || a.includes("refuge") || a.includes("hut") ||
+      a.includes("albergue") || a.includes("gite") || a.includes("ryokan") ||
+      a.includes("minshuku") || a.includes("monastery") || a.includes("cave")) return "Huts/Refuges";
+  if (a.includes("guesthouse") || a.includes("homestay") || a.includes("hotel") ||
+      a.includes("b&b") || a.includes("pension") || a.includes("lodge")) return "Guesthouses";
+  if (a.includes("camp") || a.includes("wilderness") || a.includes("backcountry")) return "Camping";
+  return "Guesthouses";
+}
+
+function getTerrainCategory(raw: string = ""): string {
+  const t = raw.toLowerCase();
+  if (t.includes("volcanic")) return "Volcanic";
+  if (t.includes("coastal") || t.includes("coast")) return "Coastal";
+  if (t.includes("jungle") || t.includes("rainforest") || t.includes("cloud forest") || t.includes("tropical")) return "Jungle/Forest";
+  if (t.includes("desert") || t.includes("canyon") || t.includes("wadi") || t.includes("sandstone")) return "Desert";
+  if (t.includes("arctic") || t.includes("tundra") || t.includes("glacial") || t.includes("glaciated")) return "Glacial/Arctic";
+  if (t.includes("high alpine") || t.includes("high sierra") || t.includes("andean") || t.includes("high plateau") || t.includes("high desert")) return "High Alpine";
+  if (t.includes("alpine")) return "Alpine";
+  return "Alpine";
+}
+
+function getDurationBucket(totalDays: string | number | undefined): string {
+  const m = String(totalDays ?? "").match(/\d+/);
+  if (!m) return "Medium";
+  const d = parseInt(m[0], 10);
+  if (d <= 5) return "Short";
+  if (d <= 10) return "Medium";
+  if (d <= 16) return "Long";
+  return "Epic";
+}
+
+function getPopularityBucket(score: number | undefined): string {
+  if (!score) return "Hidden Gem";
+  if (score >= 8) return "Iconic";
+  if (score >= 5) return "Popular";
+  return "Hidden Gem";
+}
+
 export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
   const isEmbed = useMemo(
     () => new URLSearchParams(window.location.search).get("embed") === "true",
@@ -21,52 +63,44 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
   });
 
   const { selectedTrekId, setSelectedTrekId } = useTrekStore();
-
-  // Read filters from the store (used when NOT embedded)
   const { continent, tier, setContinent, setTier } = useFilterStore();
 
-  // When embedded in the main app, override store values with postMessage data
-  // so both apps stay in sync without sharing state directly.
+  // ── Multi-select filter state from parent postMessage ─────────────────────
+  // Each field is now an array (empty = show all). Matches main app FilterState.
   const [embedFilters, setEmbedFilters] = useState<{
-    continent: string;
-    tier: string;
-    region: string;
-    accommodation: string;
-    duration: string;
-    difficulty: string;
+    tier:          string[];
+    region:        string[];
+    accommodation: string[];
+    terrain:       string[];
+    duration:      string[];
+    popularity:    string[];
   } | null>(null);
 
   const [swipeableTreks, setSwipeableTreks] = useState<any[] | null>(null);
   const setSwipeableRef = useRef(setSwipeableTreks);
   useEffect(() => { setSwipeableRef.current = setSwipeableTreks; }, []);
 
-  // ── FIX: Listen for filter + zoom postMessages from the parent app ────────────
-  // Previously GlobeViewer had NO message listener, so filter updates sent by
-  // GlobeIntegration via postMessage were completely ignored by the iframe.
+  // ── postMessage listener ──────────────────────────────────────────────────
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       const { type, payload } = event.data || {};
 
       if (type === "TREKMIND_FILTER_UPDATE" && payload) {
-        // Normalise the tier value — the main app sends "Tier 1" / "Tier 2" / "ALL"
-        // but we need a plain number or "ALL" for filtering trek.tier (which is 1/2/3).
-        const rawTier = payload.tier ?? "ALL";
-        const normalisedTier =
-          rawTier === "ALL" ? "ALL"
-          : String(rawTier).match(/\d+/)
-            ? String(rawTier).match(/\d+/)![0]   // "Tier 1" → "1", "1" → "1"
-            : "ALL";
-
-        // Region in the main app maps to continent in the globe app
-        const normalisedContinent = payload.region ?? payload.continent ?? "ALL";
+        // Main app now sends arrays for each filter field.
+        // Normalise: accept both old string format and new array format.
+        const normalise = (val: any): string[] => {
+          if (Array.isArray(val)) return val;
+          if (!val || val === "ALL") return [];
+          return [String(val)];
+        };
 
         setEmbedFilters({
-          continent: normalisedContinent,
-          tier: normalisedTier,
-          region: normalisedContinent,
-          accommodation: payload.accommodation ?? "ALL",
-          duration: payload.duration ?? "ALL",
-          difficulty: payload.difficulty ?? "ALL",
+          tier:          normalise(payload.tier),
+          region:        normalise(payload.region ?? payload.continent),
+          accommodation: normalise(payload.accommodation),
+          terrain:       normalise(payload.terrain),
+          duration:      normalise(payload.duration),
+          popularity:    normalise(payload.popularity),
         });
       }
 
@@ -74,7 +108,6 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
         const camera = (globeEl.current as any)?.camera?.();
         if (camera) camera.position.multiplyScalar(0.85);
       }
-
       if (type === "TREKMIND_ZOOM_OUT") {
         const camera = (globeEl.current as any)?.camera?.();
         if (camera) camera.position.multiplyScalar(1.15);
@@ -92,41 +125,52 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ── Resolve which filter values to actually use ───────────────────────────────
-  // When embedded: use the values received via postMessage (embedFilters).
-  // When standalone: use the local filterStore values.
-  const activeContinent = isEmbed
-    ? (embedFilters?.continent ?? "ALL")
-    : (continent ?? "ALL");
-
-  const activeTier = isEmbed
-    ? (embedFilters?.tier ?? "ALL")
-    : (tier ?? "ALL");
-
-  // ── FIX: Tier comparison now handles both "1" and "Tier 1" formats ───────────
-  // Old code: trek.tier !== parseInt(tier)
-  //   parseInt("Tier 1") = NaN → trek.tier !== NaN is always true → everything filtered out
-  //   parseInt("ALL") = NaN → same problem
-  // New code: extract the digit from any format, compare numerically
+  // ── Apply filters — multi-select arrays, empty = show all ─────────────────
   const filteredTreks = useMemo(() => {
+    const f = embedFilters;
     return TREKS.filter((trek: any) => {
-      // Continent / region filter
-      if (activeContinent && activeContinent !== "ALL" && trek.region !== activeContinent)
-        return false;
 
-      // Tier filter — safely parse "1", "Tier 1", "Tier 2" etc.
-      if (activeTier && activeTier !== "ALL") {
-        const tierNum = parseInt(String(activeTier).replace(/\D/g, ""), 10);
+      // Tier
+      if (f?.tier?.length) {
+        const nums = f.tier.map(t => parseInt(String(t).replace(/\D/g, ""), 10));
+        if (!nums.includes(trek.tier)) return false;
+      } else if (!isEmbed && tier && tier !== "ALL") {
+        const tierNum = parseInt(String(tier).replace(/\D/g, ""), 10);
         if (!isNaN(tierNum) && trek.tier !== tierNum) return false;
+      }
+
+      // Region
+      if (f?.region?.length) {
+        if (!f.region.includes(trek.region)) return false;
+      } else if (!isEmbed && continent && continent !== "ALL") {
+        if (trek.region !== continent) return false;
+      }
+
+      // Accommodation
+      if (f?.accommodation?.length) {
+        if (!f.accommodation.includes(getAccommodationCategory(trek.accommodation))) return false;
+      }
+
+      // Terrain
+      if (f?.terrain?.length) {
+        if (!f.terrain.includes(getTerrainCategory(trek.terrain))) return false;
+      }
+
+      // Duration
+      if (f?.duration?.length) {
+        if (!f.duration.includes(getDurationBucket(trek.totalDays))) return false;
+      }
+
+      // Popularity
+      if (f?.popularity?.length) {
+        if (!f.popularity.includes(getPopularityBucket(trek.popularityScore))) return false;
       }
 
       return true;
     });
-  }, [activeContinent, activeTier]);
+  }, [embedFilters, isEmbed, continent, tier]);
 
-  const clusteredData = useMemo(() => {
-    return clusterTreks(filteredTreks, 250);
-  }, [filteredTreks]);
+  const clusteredData = useMemo(() => clusterTreks(filteredTreks, 250), [filteredTreks]);
 
   const displayData = useMemo(() => {
     return clusteredData
@@ -149,8 +193,15 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
       const trekId = d.id;
       const trekName = d.name || "";
 
-      const dotSize = isCluster ? 36 : 18;
-      const hitSize = isCluster ? 56 : 52;
+      const dotSize = isCluster ? 32 : 14;
+      // ── FIX 1: Hit area sized around dot only, not label ─────────────────
+      // Previously: hitSize included space for the label above the dot,
+      // so the negative-margin centering was anchoring to the middle of the
+      // whole flex column (label+dot), not the dot itself. This made the dot
+      // appear above its actual geographic position.
+      // Now: the outer div is exactly dotSize square, so negative margins
+      // correctly centre the dot on the coordinate point.
+      const hitSize = dotSize + 20; // small touch target around dot only
       const hitOffset = hitSize / 2;
 
       const el = document.createElement("div");
@@ -168,9 +219,10 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
             width:${dotSize}px; height:${dotSize}px;
             background:#f59e0b; border-radius:50%;
             display:flex; align-items:center; justify-content:center;
-            color:white; font-size:13px; font-weight:bold;
+            color:white; font-size:12px; font-weight:700;
             border:2px solid white; box-shadow:0 4px 12px rgba(0,0,0,0.6);
             transition:transform 0.15s;
+            pointer-events:none;
           ">${d.treks?.length ?? "?"}</div>
         `;
       } else {
@@ -178,36 +230,51 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
           ? trekName.slice(0, 16).trimEnd() + "…"
           : trekName;
 
+        // ── FIX 2: Label uses text-shadow for readability, NO background box ─
+        // Original had background:rgba(0,0,0,0.65) which created the rectangle.
+        // Text-shadow gives the same contrast without the box.
+        // Label is positioned absolutely ABOVE the dot, outside the hit area,
+        // so it doesn't affect marker positioning.
         el.innerHTML = `
-          <div style="display:flex; flex-direction:column; align-items:center; gap:3px; pointer-events:none;">
-            <div style="
-              background:rgba(0,0,0,0.65); backdrop-filter:blur(4px);
-              color:white; font-size:10px; font-weight:600; line-height:1.2;
-              padding:2px 6px; border-radius:4px; white-space:nowrap;
-              max-width:120px; overflow:hidden; text-overflow:ellipsis;
-              letter-spacing:0.01em; box-shadow:0 1px 4px rgba(0,0,0,0.5);
-              pointer-events:none;
-            ">${shortName}</div>
-            <div style="
-              width:${dotSize}px; height:${dotSize}px;
-              border-radius:50%; background:#3b82f6;
-              border:2px solid white; box-shadow:0 0 10px rgba(59,130,246,0.9);
-              transition:transform 0.15s, box-shadow 0.15s;
-            "></div>
-          </div>
+          <div style="
+            position:absolute;
+            bottom:${hitSize - 2}px;
+            left:50%; transform:translateX(-50%);
+            white-space:nowrap;
+            color:white; font-size:10px; font-weight:600; line-height:1.2;
+            text-shadow:0 1px 3px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.8);
+            letter-spacing:0.01em;
+            pointer-events:none;
+          ">${shortName}</div>
+          <div style="
+            width:${dotSize}px; height:${dotSize}px;
+            border-radius:50%; background:#3b82f6;
+            border:2px solid white; box-shadow:0 0 10px rgba(59,130,246,0.9);
+            transition:transform 0.15s, box-shadow 0.15s;
+            pointer-events:none;
+          "></div>
         `;
       }
 
-      const dot = el.querySelector("div > div:last-child") as HTMLElement | null;
+      const dot = el.querySelector("div:last-child") as HTMLElement | null;
+
       el.onmouseenter = () => {
-        if (dot) { dot.style.transform = "scale(1.5)"; dot.style.boxShadow = "0 0 18px rgba(59,130,246,1)"; }
+        if (dot) {
+          dot.style.transform = "scale(1.6)";
+          dot.style.boxShadow = isCluster
+            ? "0 0 18px rgba(245,158,11,1)"
+            : "0 0 18px rgba(59,130,246,1)";
+        }
       };
       el.onmouseleave = () => {
-        if (dot) { dot.style.transform = "scale(1)"; dot.style.boxShadow = "0 0 10px rgba(59,130,246,0.9)"; }
+        if (dot) {
+          dot.style.transform = "scale(1)";
+          dot.style.boxShadow = isCluster
+            ? "0 0 10px rgba(245,158,11,0.9)"
+            : "0 0 10px rgba(59,130,246,0.9)";
+        }
       };
 
-      // pointerdown fires immediately on press — fixes the "flashing card" issue
-      // where onclick required a full press-and-release cycle before registering
       el.onpointerdown = (e) => {
         e.stopPropagation();
         setSelectedTrekId(trekId);
@@ -250,9 +317,10 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
         htmlElementsData={displayData}
         htmlLat={(d: any) => d.lat}
         htmlLng={(d: any) => d.lng}
-        htmlAltitude={0.01}
+        htmlAltitude={0}
         htmlElement={htmlElementCallback}
         onGlobeClick={() => {
+          // ── FIX 3: Ocean click closes panel in both embedded and standalone ──
           setSelectedTrekId(null);
           setSwipeableTreks(null);
           if (isEmbed) {
