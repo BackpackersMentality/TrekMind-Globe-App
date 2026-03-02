@@ -63,7 +63,7 @@ function latLngToVec3(lat: number, lng: number, alt = 0.01, R = 100): THREE.Vect
 function makeLabelSprite(text: string): THREE.Sprite {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d")!;
-  const font = "bold 22px sans-serif";
+  const font = "bold 28px sans-serif";
   ctx.font = font;
   const tw = Math.ceil(ctx.measureText(text).width) + 20;
   const th = 34;
@@ -74,18 +74,18 @@ function makeLabelSprite(text: string): THREE.Sprite {
   ctx.fillText(text, 10, th / 2);
   const mat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, depthWrite: false });
   const sprite = new THREE.Sprite(mat);
-  sprite.scale.set(tw / 70, th / 70, 1);
+  sprite.scale.set(tw / 45, th / 45, 1);
   return sprite;
 }
 
 function makeMarkerGroup(d: any): THREE.Group {
   const group = new THREE.Group();
   const isCl  = d.isCluster;
-  const dotR  = isCl ? 0.42 : 0.20;
+  const dotR  = isCl ? 0.7 : 0.45;
   const color = isCl ? 0xf59e0b : 0x3b82f6;
 
   group.add(new THREE.Mesh(
-    new THREE.SphereGeometry(dotR + 0.08, 16, 16),
+    new THREE.SphereGeometry(dotR + 0.10, 16, 16),
     new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide })
   ));
   group.add(new THREE.Mesh(
@@ -97,7 +97,7 @@ function makeMarkerGroup(d: any): THREE.Group {
     ? String(d.treks?.length ?? "?")
     : (d.name?.length > 18 ? d.name.slice(0, 16).trimEnd() + "…" : (d.name || ""));
   const label = makeLabelSprite(labelText);
-  label.position.set(0, dotR + 0.6, 0);
+  label.position.set(0, dotR + 0.8, 0);
   group.add(label);
 
   const tag = (obj: any) => { obj.__trek = d; };
@@ -178,26 +178,11 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
   const customThreeObject = useCallback((d: any) => makeMarkerGroup(d), []);
 
   const customThreeObjectUpdate = useCallback((obj: THREE.Object3D, d: any) => {
-    // 1. Position on globe surface
     const pos = latLngToVec3(d.lat, d.lng, 0.01);
     obj.position.copy(pos);
-    // 2. Orient — Y-axis points outward so label is above dot
+    // Point the group's Y-axis outward from globe centre so label sits above dot
     obj.lookAt(new THREE.Vector3(0, 0, 0));
     obj.rotateX(Math.PI);
-    // 3. Scale based on camera distance so markers are visible when zoomed out
-    //    but not giant when zoomed in.
-    //    Scale is applied AFTER position — Three.js applies scale in local space
-    //    around the object's own origin, which is already at the globe surface.
-    //    So scaling the group just makes the dot bigger/smaller in place. ✓
-    const camera = (globeEl.current as any)?.camera?.();
-    if (camera) {
-      const dist = camera.position.length(); // distance from globe centre (radius=100)
-      // dist ~350 = default zoomed-out view  →  scale ≈ 1.0  (baseline)
-      // dist ~180 = zoomed in close          →  scale ≈ 0.51 (smaller)
-      // dist ~600 = very far out             →  scale ≈ 1.7  (larger, capped)
-      const s = Math.min(1.8, Math.max(0.4, dist / 350));
-      obj.scale.setScalar(s);
-    }
   }, []);
 
   const handleClick = useCallback((obj: any) => {
