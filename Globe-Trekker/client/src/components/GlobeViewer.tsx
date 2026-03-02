@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo, useCallback } from "react";
+ import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import Globe from "react-globe.gl";
 import type { GlobeMethods } from "react-globe.gl";
 import * as THREE from "three";
@@ -40,18 +40,23 @@ function getPopularityBucket(s: any) {
   return !s ? "Hidden Gem" : s >= 8 ? "Iconic" : s >= 5 ? "Popular" : "Hidden Gem";
 }
 
-// ── Coordinate conversion matching react-globe.gl's internal system exactly ──
-// Verified against three-globe source: phi=(90-lat)*DEG2RAD, theta=lng*DEG2RAD
-// x = r*sin(phi)*sin(theta), y = r*cos(phi), z = r*sin(phi)*cos(theta)
+// ── Coordinate conversion — exact match to three-globe's polar2Cartesian ────
+// Source: github.com/vasturiano/three-globe  src/utils/coordTranslate.js
+//   phi   = (90 - lat) * DEG2RAD
+//   theta = (lng - 90) * DEG2RAD   ← the critical detail: lng-90, not lng
+//   x = r * sin(phi) * cos(theta)
+//   y = r * cos(phi)
+//   z = r * sin(phi) * sin(theta)
+// Verified: Europe/Africa = negative Z, Americas = negative X, Asia = positive X
 function latLngToVec3(lat: number, lng: number, alt = 0.01, R = 100): THREE.Vector3 {
   const DEG2RAD = Math.PI / 180;
   const phi   = (90 - lat) * DEG2RAD;
-  const theta = lng * DEG2RAD;
+  const theta = (lng - 90) * DEG2RAD;
   const r = R * (1 + alt);
   return new THREE.Vector3(
-    r * Math.sin(phi) * Math.sin(theta),
+    r * Math.sin(phi) * Math.cos(theta),
     r * Math.cos(phi),
-    r * Math.sin(phi) * Math.cos(theta)
+    r * Math.sin(phi) * Math.sin(theta)
   );
 }
 
@@ -97,6 +102,7 @@ function makeMarkerGroup(d: any): THREE.Group {
 
   const tag = (obj: any) => { obj.__trek = d; };
   tag(group); group.children.forEach(tag);
+  (group as any).__isMarker = true;
   return group;
 }
 
@@ -104,8 +110,10 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
   const isEmbed = useMemo(() =>
     new URLSearchParams(window.location.search).get("embed") === "true", []);
 
-  const globeEl = useRef<GlobeMethods | undefined>(undefined);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const globeEl      = useRef<GlobeMethods | undefined>(undefined);
+  const containerRef  = useRef<HTMLDivElement>(null);
+  const markersRef    = useRef<THREE.Group[]>([]);
+  const animFrameRef  = useRef<number>(0);
 
   const [dimensions, setDimensions] = useState(() => ({
     width: window.innerWidth, height: window.innerHeight,
@@ -120,6 +128,31 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
+  }, []);
+
+  // ── Scale markers with camera distance so they're visible when zoomed out
+  // but not enormous when zoomed in. Base distance ~350 (default view).
+  // At that distance markers render at scale 1.0. Closer = smaller, further = larger.
+  useEffect(() => {
+    const animate = () => {
+      animFrameRef.current = requestAnimationFrame(animate);
+      const camera = (globeEl.current as any)?.camera?.();
+      if (!camera) return;
+      const dist = camera.position.length(); // distance from globe centre
+      // Globe radius = 100. Default view distance ~350.
+      // Scale factor: further away = bigger markers so they stay readable.
+      // Clamped: min 0.4 (very close), max 2.5 (very far).
+      const scale = Math.min(2.5, Math.max(0.4, dist / 300));
+      const scene = (globeEl.current as any)?.scene?.();
+      if (!scene) return;
+      scene.traverse((obj: any) => {
+        if (obj.__isMarker) {
+          obj.scale.setScalar(scale);
+        }
+      });
+    };
+    animFrameRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animFrameRef.current);
   }, []);
 
   const { selectedTrekId, setSelectedTrekId } = useTrekStore();
@@ -223,4 +256,3 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     </div>
   );
 }
-
