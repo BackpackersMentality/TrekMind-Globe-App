@@ -8,7 +8,6 @@ import { useFilterStore } from "../store/useFilterStore";
 import { SwipeableTrekCards } from "./SwipeableTrekCards";
 import { clusterTreks } from "../lib/clustering";
 
-// ── Filter helpers ────────────────────────────────────────────────────────────
 function getAccommodationCategory(raw = "") {
   const a = raw.toLowerCase();
   if (a.includes("teahouse")) return "Teahouses";
@@ -41,7 +40,14 @@ function getPopularityBucket(s: any) {
   return !s ? "Hidden Gem" : s >= 8 ? "Iconic" : s >= 5 ? "Popular" : "Hidden Gem";
 }
 
-// ── Coordinate conversion — exact match to three-globe's polar2Cartesian ─────
+// ── Coordinate conversion — exact match to three-globe's polar2Cartesian ────
+// Source: github.com/vasturiano/three-globe  src/utils/coordTranslate.js
+//   phi   = (90 - lat) * DEG2RAD
+//   theta = (lng - 90) * DEG2RAD   ← the critical detail: lng-90, not lng
+//   x = r * sin(phi) * cos(theta)
+//   y = r * cos(phi)
+//   z = r * sin(phi) * sin(theta)
+// Verified: Europe/Africa = negative Z, Americas = negative X, Asia = positive X
 function latLngToVec3(lat: number, lng: number, alt = 0.01, R = 100): THREE.Vector3 {
   const DEG2RAD = Math.PI / 180;
   const phi   = (90 - lat) * DEG2RAD;
@@ -54,7 +60,6 @@ function latLngToVec3(lat: number, lng: number, alt = 0.01, R = 100): THREE.Vect
   );
 }
 
-// ── Label sprite ──────────────────────────────────────────────────────────────
 function makeLabelSprite(text: string): THREE.Sprite {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d")!;
@@ -69,36 +74,25 @@ function makeLabelSprite(text: string): THREE.Sprite {
   ctx.fillText(text, 10, th / 2);
   const mat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, depthWrite: false });
   const sprite = new THREE.Sprite(mat);
-  // Base scale — will NOT be changed by the size animation.
-  // Sprites auto-face camera so they always look right.
-  sprite.scale.set(tw / 55, th / 55, 1);
+  sprite.scale.set(tw / 70, th / 70, 1);
   return sprite;
 }
 
-// ── Marker group — position is set in customThreeObjectUpdate ─────────────────
-// The group sits at world origin; customThreeObjectUpdate moves it to the
-// correct globe surface position each frame. We never scale the GROUP itself
-// (that would shift it away from its anchor point). Instead the rAF loop
-// scales only the inner dot meshes via userData.dotMeshes.
 function makeMarkerGroup(d: any): THREE.Group {
-  const group   = new THREE.Group();
-  const isCl    = d.isCluster;
-  const dotR    = isCl ? 0.5 : 0.28;
-  const color   = isCl ? 0xf59e0b : 0x3b82f6;
+  const group = new THREE.Group();
+  const isCl  = d.isCluster;
+  const dotR  = isCl ? 0.42 : 0.20;
+  const color = isCl ? 0xf59e0b : 0x3b82f6;
 
-  // White border
-  const border = new THREE.Mesh(
-    new THREE.SphereGeometry(dotR + 0.09, 16, 16),
+  group.add(new THREE.Mesh(
+    new THREE.SphereGeometry(dotR + 0.08, 16, 16),
     new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide })
-  );
-  // Coloured dot
-  const dot = new THREE.Mesh(
+  ));
+  group.add(new THREE.Mesh(
     new THREE.SphereGeometry(dotR, 16, 16),
     new THREE.MeshBasicMaterial({ color })
-  );
-  group.add(border, dot);
+  ));
 
-  // Label
   const labelText = isCl
     ? String(d.treks?.length ?? "?")
     : (d.name?.length > 18 ? d.name.slice(0, 16).trimEnd() + "…" : (d.name || ""));
@@ -106,15 +100,8 @@ function makeMarkerGroup(d: any): THREE.Group {
   label.position.set(0, dotR + 0.6, 0);
   group.add(label);
 
-  // Store references for the size loop — we scale DOT MESHES, not the group
-  (group as any).userData.dotMeshes = [border, dot];
-  (group as any).userData.label     = label;
-  (group as any).userData.baseDotR  = dotR;
-
-  // Click data
   const tag = (obj: any) => { obj.__trek = d; };
   tag(group); group.children.forEach(tag);
-
   return group;
 }
 
@@ -122,9 +109,8 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
   const isEmbed = useMemo(() =>
     new URLSearchParams(window.location.search).get("embed") === "true", []);
 
-  const globeEl      = useRef<GlobeMethods | undefined>(undefined);
+  const globeEl = useRef<GlobeMethods | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
-  const rafRef       = useRef<number>(0);
 
   const [dimensions, setDimensions] = useState(() => ({
     width: window.innerWidth, height: window.innerHeight,
@@ -141,38 +127,6 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     return () => ro.disconnect();
   }, []);
 
-  // ── Camera-distance marker sizing ─────────────────────────────────────────
-  // We scale only the dot meshes (not the group) so position is unaffected.
-  // Label sprite is also rescaled proportionally.
-  // Globe radius = 100. Default camera distance ≈ 350.
-  useEffect(() => {
-    const tick = () => {
-      rafRef.current = requestAnimationFrame(tick);
-      const camera = (globeEl.current as any)?.camera?.();
-      if (!camera) return;
-      const dist = camera.position.length();
-      // At dist=350 (default), scale=1. Zoomed in (dist=180) → scale≈0.5. Far → capped 2.2
-      const s = Math.min(2.2, Math.max(0.45, dist / 350));
-      const scene = (globeEl.current as any)?.scene?.();
-      if (!scene) return;
-      scene.traverse((child: any) => {
-        if (!child.userData?.dotMeshes) return;
-        // Scale only the meshes inside the group, NOT the group itself
-        child.userData.dotMeshes.forEach((m: THREE.Mesh) => m.scale.setScalar(s));
-        // Scale label too, keeping it offset above the (scaled) dot
-        const lbl = child.userData.label as THREE.Sprite;
-        if (lbl) {
-          lbl.scale.set((lbl.material.map!.image.width / 55) * s,
-                        (lbl.material.map!.image.height / 55) * s, 1);
-          const base = child.userData.baseDotR as number;
-          lbl.position.setY((base + 0.6) * s);
-        }
-      });
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, []);
-
   const { selectedTrekId, setSelectedTrekId } = useTrekStore();
   const { continent, tier } = useFilterStore();
   const [embedFilters, setEmbedFilters] = useState<any>(null);
@@ -185,11 +139,9 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
       const { type, payload } = e.data || {};
       if (type === "TREKMIND_FILTER_UPDATE" && payload) {
         const n = (v: any): string[] => Array.isArray(v) ? v : (!v || v === "ALL") ? [] : [String(v)];
-        setEmbedFilters({
-          tier: n(payload.tier), region: n(payload.region ?? payload.continent),
+        setEmbedFilters({ tier: n(payload.tier), region: n(payload.region ?? payload.continent),
           accommodation: n(payload.accommodation), terrain: n(payload.terrain),
-          duration: n(payload.duration), popularity: n(payload.popularity),
-        });
+          duration: n(payload.duration), popularity: n(payload.popularity) });
       }
       if (type === "TREKMIND_ZOOM_IN")  { const c = (globeEl.current as any)?.camera?.(); if (c) c.position.multiplyScalar(0.85); }
       if (type === "TREKMIND_ZOOM_OUT") { const c = (globeEl.current as any)?.camera?.(); if (c) c.position.multiplyScalar(1.15); }
@@ -201,13 +153,8 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
   const filteredTreks = useMemo(() => {
     const f = embedFilters;
     return (TREKS as any[]).filter(trek => {
-      if (f?.tier?.length) {
-        const nums = f.tier.map((t: any) => parseInt(String(t).replace(/\D/g, ""), 10));
-        if (!nums.includes(trek.tier)) return false;
-      } else if (!isEmbed && tier && tier !== "ALL") {
-        const n = parseInt(String(tier).replace(/\D/g, ""), 10);
-        if (!isNaN(n) && trek.tier !== n) return false;
-      }
+      if (f?.tier?.length) { const nums = f.tier.map((t:any)=>parseInt(String(t).replace(/\D/g,""),10)); if (!nums.includes(trek.tier)) return false; }
+      else if (!isEmbed && tier && tier !== "ALL") { const n=parseInt(String(tier).replace(/\D/g,""),10); if (!isNaN(n)&&trek.tier!==n) return false; }
       if (f?.region?.length && !f.region.includes(trek.region)) return false;
       else if (!isEmbed && continent && continent !== "ALL" && trek.region !== continent) return false;
       if (f?.accommodation?.length && !f.accommodation.includes(getAccommodationCategory(trek.accommodation))) return false;
@@ -225,23 +172,32 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
         lat: item.lat ?? item.latitude,
         lng: item.lng ?? item.longitude,
       }))
-      .filter((item: any) =>
-        typeof item.lat === "number" && typeof item.lng === "number" &&
-        !isNaN(item.lat) && !isNaN(item.lng)
-      ),
+      .filter((item: any) => typeof item.lat === "number" && typeof item.lng === "number" && !isNaN(item.lat) && !isNaN(item.lng)),
   [filteredTreks]);
 
   const customThreeObject = useCallback((d: any) => makeMarkerGroup(d), []);
 
-  // ── Position group on globe surface — only sets position, never scale ──────
   const customThreeObjectUpdate = useCallback((obj: THREE.Object3D, d: any) => {
+    // 1. Position on globe surface
     const pos = latLngToVec3(d.lat, d.lng, 0.01);
     obj.position.copy(pos);
+    // 2. Orient — Y-axis points outward so label is above dot
     obj.lookAt(new THREE.Vector3(0, 0, 0));
     obj.rotateX(Math.PI);
-    // Keep click data fresh
-    (obj as any).__trek = d;
-    obj.children?.forEach((c: any) => { c.__trek = d; });
+    // 3. Scale based on camera distance so markers are visible when zoomed out
+    //    but not giant when zoomed in.
+    //    Scale is applied AFTER position — Three.js applies scale in local space
+    //    around the object's own origin, which is already at the globe surface.
+    //    So scaling the group just makes the dot bigger/smaller in place. ✓
+    const camera = (globeEl.current as any)?.camera?.();
+    if (camera) {
+      const dist = camera.position.length(); // distance from globe centre (radius=100)
+      // dist ~350 = default zoomed-out view  →  scale ≈ 1.0  (baseline)
+      // dist ~180 = zoomed in close          →  scale ≈ 0.51 (smaller)
+      // dist ~600 = very far out             →  scale ≈ 1.7  (larger, capped)
+      const s = Math.min(1.8, Math.max(0.4, dist / 350));
+      obj.scale.setScalar(s);
+    }
   }, []);
 
   const handleClick = useCallback((obj: any) => {
@@ -282,11 +238,7 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
         atmosphereAltitude={0.15}
       />
       {swipeableTreks && !hideCards && (
-        <SwipeableTrekCards
-          treks={swipeableTreks}
-          initialIndex={0}
-          onClose={() => setSwipeableTreks(null)}
-        />
+        <SwipeableTrekCards treks={swipeableTreks} initialIndex={0} onClose={() => setSwipeableTreks(null)} />
       )}
     </div>
   );
