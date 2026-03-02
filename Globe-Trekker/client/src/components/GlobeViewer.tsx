@@ -8,8 +8,7 @@ import { useFilterStore } from "../store/useFilterStore";
 import { SwipeableTrekCards } from "./SwipeableTrekCards";
 import { clusterTreks } from "../lib/clustering";
 
-// ── Filter helpers ────────────────────────────────────────────────────────────
-function getAccommodationCategory(raw: string = ""): string {
+function getAccommodationCategory(raw = "") {
   const a = raw.toLowerCase();
   if (a.includes("teahouse")) return "Teahouses";
   if (a.includes("rifugio") || a.includes("refuge") || a.includes("hut") ||
@@ -20,108 +19,102 @@ function getAccommodationCategory(raw: string = ""): string {
   if (a.includes("camp") || a.includes("wilderness") || a.includes("backcountry")) return "Camping";
   return "Guesthouses";
 }
-function getTerrainCategory(raw: string = ""): string {
+function getTerrainCategory(raw = "") {
   const t = raw.toLowerCase();
   if (t.includes("volcanic")) return "Volcanic";
-  if (t.includes("coastal") || t.includes("coast")) return "Coastal";
+  if (t.includes("coastal")) return "Coastal";
   if (t.includes("jungle") || t.includes("rainforest") || t.includes("cloud forest") || t.includes("tropical")) return "Jungle/Forest";
-  if (t.includes("desert") || t.includes("canyon") || t.includes("wadi") || t.includes("sandstone")) return "Desert";
+  if (t.includes("desert") || t.includes("canyon") || t.includes("wadi")) return "Desert";
   if (t.includes("arctic") || t.includes("tundra") || t.includes("glacial") || t.includes("glaciated")) return "Glacial/Arctic";
-  if (t.includes("high alpine") || t.includes("high sierra") || t.includes("andean") || t.includes("high plateau") || t.includes("high desert")) return "High Alpine";
+  if (t.includes("high alpine") || t.includes("high sierra") || t.includes("andean")) return "High Alpine";
   if (t.includes("alpine")) return "Alpine";
   return "Alpine";
 }
-function getDurationBucket(d: string | number | undefined): string {
+function getDurationBucket(d: any) {
   const m = String(d ?? "").match(/\d+/);
   if (!m) return "Medium";
   const n = parseInt(m[0]);
   return n <= 5 ? "Short" : n <= 10 ? "Medium" : n <= 16 ? "Long" : "Epic";
 }
-function getPopularityBucket(s: number | undefined): string {
-  if (!s) return "Hidden Gem";
-  return s >= 8 ? "Iconic" : s >= 5 ? "Popular" : "Hidden Gem";
+function getPopularityBucket(s: any) {
+  return !s ? "Hidden Gem" : s >= 8 ? "Iconic" : s >= 5 ? "Popular" : "Hidden Gem";
 }
 
-// ── Label sprite builder ──────────────────────────────────────────────────────
-// Renders text to a canvas, wraps it in a Three.js Sprite so it's a true
-// 3D object that stays locked to its world-space position at all zoom levels.
-function makeLabelSprite(text: string): THREE.Sprite {
-  const canvas  = document.createElement("canvas");
-  const ctx     = canvas.getContext("2d")!;
-  const font    = "bold 24px sans-serif";
-  ctx.font      = font;
-  const metrics = ctx.measureText(text);
-  const w = Math.ceil(metrics.width) + 16;
-  const h = 36;
-  canvas.width  = w;
-  canvas.height = h;
-  ctx.font      = font;
-  ctx.fillStyle = "rgba(0,0,0,0)";
-  ctx.fillRect(0, 0, w, h);
-  // Text shadow for readability
-  ctx.shadowColor   = "rgba(0,0,0,0.95)";
-  ctx.shadowBlur    = 6;
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 1;
-  ctx.fillStyle = "#ffffff";
-  ctx.textBaseline = "middle";
-  ctx.fillText(text, 8, h / 2);
+// ── Convert lat/lng to THREE.js world coordinates on the globe surface ────────
+// react-globe.gl uses a globe radius of 100 by default.
+// Altitude is a fraction of the radius (0.01 = 1% above surface).
+function latLngToVec3(lat: number, lng: number, alt = 0.01, R = 100): THREE.Vector3 {
+  const phi   = (90 - lat) * (Math.PI / 180);
+  const theta = (lng + 180) * (Math.PI / 180);
+  const r = R * (1 + alt);
+  return new THREE.Vector3(
+    -r * Math.sin(phi) * Math.cos(theta),
+     r * Math.cos(phi),
+     r * Math.sin(phi) * Math.sin(theta)
+  );
+}
 
-  const tex      = new THREE.CanvasTexture(canvas);
-  const mat      = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false });
-  const sprite   = new THREE.Sprite(mat);
-  // Scale sprite so it appears ~same pixel size regardless of zoom
-  // These values look good at default zoom; THREE.js sprite scale is in world units
-  sprite.scale.set(w / 60, h / 60, 1);
+// ── Canvas text sprite ────────────────────────────────────────────────────────
+function makeLabelSprite(text: string): THREE.Sprite {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d")!;
+  const font = "bold 22px sans-serif";
+  ctx.font = font;
+  const tw = Math.ceil(ctx.measureText(text).width) + 20;
+  const th = 34;
+  canvas.width = tw; canvas.height = th;
+  ctx.font = font;
+  ctx.shadowColor = "rgba(0,0,0,1)"; ctx.shadowBlur = 8;
+  ctx.fillStyle = "#ffffff"; ctx.textBaseline = "middle";
+  ctx.fillText(text, 10, th / 2);
+  const mat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, depthWrite: false });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(tw / 55, th / 55, 1);
   return sprite;
 }
 
-// ── Group builder: dot + label as one Three.js Group ─────────────────────────
+// ── Build marker group ────────────────────────────────────────────────────────
 function makeMarkerGroup(d: any): THREE.Group {
-  const group     = new THREE.Group();
-  const isCluster = d.isCluster;
+  const group = new THREE.Group();
+  const isCl  = d.isCluster;
+  const dotR  = isCl ? 0.5 : 0.25;
+  const color = isCl ? 0xf59e0b : 0x3b82f6;
 
-  // Dot
-  const dotR    = isCluster ? 0.55 : 0.28;
-  const color   = isCluster ? 0xf59e0b : 0x3b82f6;
-  const geo     = new THREE.SphereGeometry(dotR, 16, 16);
-  const mat     = new THREE.MeshBasicMaterial({ color });
-  const dot     = new THREE.Mesh(geo, mat);
-  group.add(dot);
+  group.add(new THREE.Mesh(
+    new THREE.SphereGeometry(dotR + 0.08, 16, 16),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide })
+  ));
+  group.add(new THREE.Mesh(
+    new THREE.SphereGeometry(dotR, 16, 16),
+    new THREE.MeshBasicMaterial({ color })
+  ));
 
-  // White outline ring (gives the white border look)
-  const ringGeo = new THREE.SphereGeometry(dotR + 0.06, 16, 16);
-  const ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide });
-  group.add(new THREE.Mesh(ringGeo, ringMat));
-
-  // Label sprite — positioned above the dot
-  const label   = isCluster
-    ? makeLabelSprite(String(d.treks?.length ?? "?"))
-    : makeLabelSprite(d.name?.length > 18 ? d.name.slice(0, 16).trimEnd() + "…" : (d.name || ""));
-  label.position.set(0, dotR + 0.55, 0); // above the dot in local space
+  const labelText = isCl
+    ? String(d.treks?.length ?? "?")
+    : (d.name?.length > 18 ? d.name.slice(0, 16).trimEnd() + "…" : (d.name || ""));
+  const label = makeLabelSprite(labelText);
+  label.position.set(0, dotR + 0.6, 0);
   group.add(label);
 
-  // Store metadata for click/hover
-  (group as any).__trekData = d;
+  // Tag for click detection
+  const tag = (obj: any) => { obj.__trek = d; };
+  tag(group); group.children.forEach(tag);
 
   return group;
 }
 
 export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
-  const isEmbed = useMemo(
-    () => new URLSearchParams(window.location.search).get("embed") === "true", []
-  );
+  const isEmbed = useMemo(() =>
+    new URLSearchParams(window.location.search).get("embed") === "true", []);
 
-  const globeEl      = useRef<GlobeMethods | undefined>(undefined);
+  const globeEl = useRef<GlobeMethods | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [dimensions, setDimensions] = useState(() => ({
     width: window.innerWidth, height: window.innerHeight,
   }));
-
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
+    const el = containerRef.current; if (!el) return;
     const update = () => {
       const r = el.getBoundingClientRect();
       if (r.width > 0 && r.height > 0) setDimensions({ width: r.width, height: r.height });
@@ -134,7 +127,6 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
 
   const { selectedTrekId, setSelectedTrekId } = useTrekStore();
   const { continent, tier } = useFilterStore();
-
   const [embedFilters, setEmbedFilters] = useState<any>(null);
   const [swipeableTreks, setSwipeableTreks] = useState<any[] | null>(null);
   const swipeRef = useRef(setSwipeableTreks);
@@ -145,11 +137,9 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
       const { type, payload } = e.data || {};
       if (type === "TREKMIND_FILTER_UPDATE" && payload) {
         const n = (v: any): string[] => Array.isArray(v) ? v : (!v || v === "ALL") ? [] : [String(v)];
-        setEmbedFilters({
-          tier: n(payload.tier), region: n(payload.region ?? payload.continent),
+        setEmbedFilters({ tier: n(payload.tier), region: n(payload.region ?? payload.continent),
           accommodation: n(payload.accommodation), terrain: n(payload.terrain),
-          duration: n(payload.duration), popularity: n(payload.popularity),
-        });
+          duration: n(payload.duration), popularity: n(payload.popularity) });
       }
       if (type === "TREKMIND_ZOOM_IN")  { const c = (globeEl.current as any)?.camera?.(); if (c) c.position.multiplyScalar(0.85); }
       if (type === "TREKMIND_ZOOM_OUT") { const c = (globeEl.current as any)?.camera?.(); if (c) c.position.multiplyScalar(1.15); }
@@ -160,9 +150,9 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
 
   const filteredTreks = useMemo(() => {
     const f = embedFilters;
-    return TREKS.filter((trek: any) => {
-      if (f?.tier?.length) { const nums = f.tier.map((t:any) => parseInt(String(t).replace(/\D/g,""),10)); if (!nums.includes(trek.tier)) return false; }
-      else if (!isEmbed && tier && tier !== "ALL") { const n = parseInt(String(tier).replace(/\D/g,""),10); if (!isNaN(n) && trek.tier !== n) return false; }
+    return (TREKS as any[]).filter(trek => {
+      if (f?.tier?.length) { const nums = f.tier.map((t:any)=>parseInt(String(t).replace(/\D/g,""),10)); if (!nums.includes(trek.tier)) return false; }
+      else if (!isEmbed && tier && tier !== "ALL") { const n=parseInt(String(tier).replace(/\D/g,""),10); if (!isNaN(n)&&trek.tier!==n) return false; }
       if (f?.region?.length && !f.region.includes(trek.region)) return false;
       else if (!isEmbed && continent && continent !== "ALL" && trek.region !== continent) return false;
       if (f?.accommodation?.length && !f.accommodation.includes(getAccommodationCategory(trek.accommodation))) return false;
@@ -173,27 +163,35 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     });
   }, [embedFilters, isEmbed, continent, tier]);
 
-  const displayData = useMemo(() => {
-    return clusterTreks(filteredTreks, 250)
+  const displayData = useMemo(() =>
+    clusterTreks(filteredTreks, 250)
       .map((item: any) => ({
         ...item,
         lat: item.lat ?? item.latitude,
         lng: item.lng ?? item.longitude,
       }))
-      .filter((item: any) => typeof item.lat === "number" && typeof item.lng === "number" && !isNaN(item.lat) && !isNaN(item.lng));
-  }, [filteredTreks]);
+      .filter((item: any) => typeof item.lat === "number" && typeof item.lng === "number" && !isNaN(item.lat) && !isNaN(item.lng)),
+  [filteredTreks]);
 
-  // Build a stable THREE.Group per data point, memoised so we don't recreate
-  // geometry every render — only when the trek list actually changes.
   const customThreeObject = useCallback((d: any) => makeMarkerGroup(d), []);
 
-  const handleObjectClick = useCallback((obj: any) => {
-    const d = (obj as any)?.__trekData ?? (obj?.parent as any)?.__trekData;
+  // ── CRITICAL: position the group on the globe surface each frame ──────────
+  const customThreeObjectUpdate = useCallback((obj: THREE.Object3D, d: any) => {
+    const pos = latLngToVec3(d.lat, d.lng, 0.01);
+    obj.position.copy(pos);
+    // Orient the group so "up" points away from globe centre
+    // This makes the label sit above the dot (not sideways)
+    obj.lookAt(new THREE.Vector3(0, 0, 0));
+    obj.rotateX(Math.PI); // flip so label is above, not below
+  }, []);
+
+  const handleClick = useCallback((obj: any) => {
+    let node: any = obj;
+    while (node && !node.__trek) node = node.parent;
+    const d = node?.__trek;
     if (!d) return;
     setSelectedTrekId(d.id);
-    const payload = d.isCluster
-      ? d.treks.map((t: any) => ({ id: t.id }))
-      : [{ id: d.id }];
+    const payload = d.isCluster ? d.treks.map((t: any) => ({ id: t.id })) : [{ id: d.id }];
     if (isEmbed) {
       window.parent.postMessage({ type: "TREK_SELECTED_FROM_GLOBE", payload }, "*");
     } else {
@@ -201,23 +199,9 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     }
   }, [isEmbed, setSelectedTrekId]);
 
-  const handleObjectHover = useCallback((obj: any) => {
-    // Scale the dot mesh up on hover
-    const group = (obj as any)?.__trekData
-      ? obj
-      : (obj?.parent as any)?.__trekData
-        ? obj.parent
-        : null;
-    if (!group) return;
-    const dot = group.children[0] as THREE.Mesh;
-    if (dot) dot.scale.setScalar(obj ? 1.5 : 1.0);
-  }, []);
-
   return (
-    <div
-      ref={containerRef}
-      style={{ position: "absolute", inset: 0, background: "#0a0a1a", overflow: "visible" }}
-    >
+    <div ref={containerRef}
+      style={{ position: "absolute", inset: 0, background: "#0a0a1a", overflow: "visible" }}>
       <Globe
         ref={globeEl as any}
         width={dimensions.width}
@@ -225,23 +209,11 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
         globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
         bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
         backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
-
-        // ── TRUE 3D MARKERS — no more HTML element drift ──────────────────
-        // customLayerData places real Three.js objects in the scene graph.
-        // They're rendered by the GPU at exactly the right world position
-        // every frame — no CSS projection, no drift at any zoom level.
         customLayerData={displayData}
         customThreeObject={customThreeObject}
-        customThreeObjectUpdate={(obj: any, d: any) => {
-          // react-globe.gl calls this to let us update position.
-          // The library handles lat/lng → world coords via the helper below.
-          // We just store the data reference in case it changed.
-          (obj as any).__trekData = d;
-        }}
-        customLayerLabel={(d: any) => ""} // disable built-in tooltip
-        onCustomLayerClick={handleObjectClick}
-        onCustomLayerHover={handleObjectHover}
-
+        customThreeObjectUpdate={customThreeObjectUpdate}
+        customLayerLabel={() => ""}
+        onCustomLayerClick={handleClick}
         onGlobeClick={() => {
           setSelectedTrekId(null);
           setSwipeableTreks(null);
@@ -250,13 +222,8 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
         atmosphereColor="#3a228a"
         atmosphereAltitude={0.15}
       />
-
       {swipeableTreks && !hideCards && (
-        <SwipeableTrekCards
-          treks={swipeableTreks}
-          initialIndex={0}
-          onClose={() => setSwipeableTreks(null)}
-        />
+        <SwipeableTrekCards treks={swipeableTreks} initialIndex={0} onClose={() => setSwipeableTreks(null)} />
       )}
     </div>
   );
