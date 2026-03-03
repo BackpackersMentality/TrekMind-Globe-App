@@ -54,25 +54,30 @@ function latLngToVec3(lat: number, lng: number, alt = 0.01, R = 100): THREE.Vect
 
 function makeLabelSprite(text: string): THREE.Sprite {
   const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d")!;
-  const font = "bold 50px sans-serif";
+  const ctx    = canvas.getContext("2d")!;
+  // Font size 44px — canvas height 66px (1.5× font size) gives full room for
+  // ascenders + descenders with no clipping. Previous th=34 was smaller than
+  // the font size itself, which is why text was vertically cut off.
+  const font = "bold 44px sans-serif";
   ctx.font = font;
-  const tw = Math.ceil(ctx.measureText(text).width) + 20;
-  const th = 34;
-  canvas.width = tw; canvas.height = th;
+  const tw = Math.ceil(ctx.measureText(text).width) + 24; // padding each side
+  const th = 66;
+  canvas.width  = tw;
+  canvas.height = th;
   ctx.font = font;
-  ctx.shadowColor = "rgba(0,0,0,1)"; ctx.shadowBlur = 8;
-  ctx.fillStyle = "#ffffff"; ctx.textBaseline = "middle";
-  ctx.fillText(text, 10, th / 2);
+  ctx.shadowColor = "rgba(0,0,0,1)";
+  ctx.shadowBlur  = 8;
+  ctx.fillStyle   = "#ffffff";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, 12, th / 2);
   const mat = new THREE.SpriteMaterial({
     map: new THREE.CanvasTexture(canvas),
     transparent: true,
     depthWrite: false,
-    // Keep depthTest ON so the globe occludes dots on the back face correctly.
-    // Visibility of labels is handled per-frame via opacity in the RAF loop below.
-    depthTest: true,
+    depthTest: true, // globe occludes dots on back face correctly
   });
   const sprite = new THREE.Sprite(mat);
+  // Scale divisor 32 keeps visual size the same as before
   sprite.scale.set(tw / 32, th / 32, 1);
   return sprite;
 }
@@ -80,8 +85,7 @@ function makeLabelSprite(text: string): THREE.Sprite {
 function makeMarkerGroup(d: any): THREE.Group {
   const group = new THREE.Group();
   const isCl  = d.isCluster;
-  // 1.5× bigger than the previous 1.2 / 1.0
-  const dotR  = isCl ? 1.8 : 1.5;
+  const dotR  = isCl ? 1.8 : 1.5;  // 1.5× the original 1.2 / 1.0
   const color = isCl ? 0xf59e0b : 0x3b82f6;
 
   group.add(new THREE.Mesh(
@@ -93,15 +97,15 @@ function makeMarkerGroup(d: any): THREE.Group {
     new THREE.MeshBasicMaterial({ color })
   ));
 
+  // Allow up to 22 chars before truncating — previously 16 was cutting "Fisherman's Trail" etc.
   const labelText = isCl
     ? String(d.treks?.length ?? "?")
-    : (d.name?.length > 18 ? d.name.slice(0, 16).trimEnd() + "…" : (d.name || ""));
+    : (d.name?.length > 22 ? d.name.slice(0, 20).trimEnd() + "…" : (d.name || ""));
   const label = makeLabelSprite(labelText);
-  // Moved further from marker
   label.position.set(0, dotR + 1.8, 0);
   group.add(label);
 
-  // Store label ref for visibility control in RAF loop
+  // Store label ref so the RAF visibility loop can toggle it
   (group as any).__label = label;
 
   const tag = (obj: any) => { obj.__trek = d; };
@@ -120,6 +124,7 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
   const [dimensions, setDimensions] = useState(() => ({
     width: window.innerWidth, height: window.innerHeight,
   }));
+
   useEffect(() => {
     const el = containerRef.current; if (!el) return;
     const update = () => {
@@ -132,46 +137,26 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     return () => ro.disconnect();
   }, []);
 
-  // ── Per-frame label visibility based on whether marker faces the camera ────
-  // Strategy: dot product of the marker's world position (normalised) against
-  // the camera direction. If dot < threshold the marker is on the back face →
-  // hide its label by setting opacity to 0. The dot meshes are left alone
-  // (depthTest handles them correctly already).
-  // This replaces the previous depthTest:false approach which caused labels
-  // to show through the globe from the other side.
+  // Per-frame label visibility — hide labels whose marker is on the back face.
+  // Dot product of surface-normal vs camera direction: negative = behind globe.
   useEffect(() => {
-    const _tmpCamDir = new THREE.Vector3();
-    const _tmpPos    = new THREE.Vector3();
-
+    const camDir = new THREE.Vector3();
+    const pos    = new THREE.Vector3();
     const tick = () => {
       rafRef.current = requestAnimationFrame(tick);
       const camera = (globeEl.current as any)?.camera?.();
       const scene  = (globeEl.current as any)?.scene?.();
       if (!camera || !scene) return;
-
-      // Unit vector from globe centre toward camera
-      _tmpCamDir.copy(camera.position).normalize();
-
+      camDir.copy(camera.position).normalize();
       scene.traverse((obj: any) => {
-        if (!obj.__label) return; // only marker groups
-        const label = obj.__label as THREE.Sprite;
-
-        // World position of the group (= surface point)
-        obj.getWorldPosition(_tmpPos);
-        _tmpPos.normalize();
-
-        // dot > 0  → facing camera (front half) → visible
-        // dot < 0  → away from camera (back half) → hidden
-        // We use a small positive threshold (0.05) so labels fade out
-        // slightly before the limb, avoiding the half-visible edge case.
-        const dot = _tmpPos.dot(_tmpCamDir);
-        const opacity = dot > 0.05 ? 1 : 0;
-        if ((label.material as THREE.SpriteMaterial).opacity !== opacity) {
-          (label.material as THREE.SpriteMaterial).opacity = opacity;
-        }
+        if (!obj.__label) return;
+        obj.getWorldPosition(pos);
+        pos.normalize();
+        const opacity = pos.dot(camDir) > 0.05 ? 1 : 0;
+        const mat = (obj.__label as THREE.Sprite).material as THREE.SpriteMaterial;
+        if (mat.opacity !== opacity) mat.opacity = opacity;
       });
     };
-
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
   }, []);
@@ -188,9 +173,11 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
       const { type, payload } = e.data || {};
       if (type === "TREKMIND_FILTER_UPDATE" && payload) {
         const n = (v: any): string[] => Array.isArray(v) ? v : (!v || v === "ALL") ? [] : [String(v)];
-        setEmbedFilters({ tier: n(payload.tier), region: n(payload.region ?? payload.continent),
+        setEmbedFilters({
+          tier: n(payload.tier), region: n(payload.region ?? payload.continent),
           accommodation: n(payload.accommodation), terrain: n(payload.terrain),
-          duration: n(payload.duration), popularity: n(payload.popularity) });
+          duration: n(payload.duration), popularity: n(payload.popularity),
+        });
       }
       if (type === "TREKMIND_ZOOM_IN")  { const c = (globeEl.current as any)?.camera?.(); if (c) c.position.multiplyScalar(0.85); }
       if (type === "TREKMIND_ZOOM_OUT") { const c = (globeEl.current as any)?.camera?.(); if (c) c.position.multiplyScalar(1.15); }
@@ -221,7 +208,10 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
         lat: item.lat ?? item.latitude,
         lng: item.lng ?? item.longitude,
       }))
-      .filter((item: any) => typeof item.lat === "number" && typeof item.lng === "number" && !isNaN(item.lat) && !isNaN(item.lng)),
+      .filter((item: any) =>
+        typeof item.lat === "number" && typeof item.lng === "number" &&
+        !isNaN(item.lat) && !isNaN(item.lng)
+      ),
   [filteredTreks]);
 
   const customThreeObject = useCallback((d: any) => makeMarkerGroup(d), []);
@@ -233,7 +223,7 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     obj.rotateX(Math.PI);
   }, []);
 
-  // Unified selection — shared by click handler and touch fallback
+  // Shared selection logic used by both mouse click and touch fallback
   const fireSelection = useCallback((d: any) => {
     if (!d) return;
     setSelectedTrekId(d.id);
@@ -253,20 +243,18 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     fireSelection(node?.__trek);
   }, [fireSelection]);
 
-  // Direct pointerdown raycasting for embed/mobile — fires immediately on touch
-  // rather than waiting for the delayed 'click' event that gets dropped in iframes
+  // Direct pointerdown raycasting for embed/mobile.
+  // 'click' events fire 300ms after touchend and get silently dropped inside
+  // iframes — pointerdown fires immediately on first touch contact.
   useEffect(() => {
     if (!isEmbed) return;
-
     const attach = () => {
       const renderer = (globeEl.current as any)?.renderer?.();
       const camera   = (globeEl.current as any)?.camera?.();
       const scene    = (globeEl.current as any)?.scene?.();
       if (!renderer || !camera || !scene) return null;
-
       const canvas    = renderer.domElement;
       const raycaster = new THREE.Raycaster();
-
       const onPointerDown = (e: PointerEvent) => {
         const rect = canvas.getBoundingClientRect();
         const x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
@@ -276,30 +264,19 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
         for (const hit of hits) {
           let node: any = hit.object;
           while (node && !node.__trek) node = node.parent;
-          if (node?.__trek) {
-            e.stopPropagation();
-            fireSelection(node.__trek);
-            return;
-          }
+          if (node?.__trek) { e.stopPropagation(); fireSelection(node.__trek); return; }
         }
       };
-
       canvas.addEventListener("pointerdown", onPointerDown);
       return () => canvas.removeEventListener("pointerdown", onPointerDown);
     };
-
     let cleanup: (() => void) | null = null;
     let tries = 0;
     const iv = setInterval(() => {
-      const result = attach();
-      if (result !== null) {
-        clearInterval(iv);
-        if (result) cleanup = result;
-      } else if (tries++ > 20) {
-        clearInterval(iv);
-      }
+      const r = attach();
+      if (r !== null) { clearInterval(iv); if (r) cleanup = r; }
+      else if (tries++ > 20) clearInterval(iv);
     }, 200);
-
     return () => { clearInterval(iv); cleanup?.(); };
   }, [isEmbed, fireSelection]);
 
