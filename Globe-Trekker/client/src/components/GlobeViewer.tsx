@@ -58,7 +58,7 @@ function latLngToVec3(lat: number, lng: number, alt = 0.01, R = 100): THREE.Vect
 function makeLabelSprite(text: string): THREE.Sprite {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d")!;
-  const font = "bold 22px sans-serif";
+  const font = "bold 30px sans-serif";
   ctx.font = font;
   const tw = Math.ceil(ctx.measureText(text).width) + 20;
   const th = 34;
@@ -69,18 +69,18 @@ function makeLabelSprite(text: string): THREE.Sprite {
   ctx.fillText(text, 10, th / 2);
   const mat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, depthWrite: false });
   const sprite = new THREE.Sprite(mat);
-  sprite.scale.set(tw / 55, th / 55, 1);
+  sprite.scale.set(tw / 42, th / 42, 1);
   return sprite;
 }
 
 function makeMarkerGroup(d: any): THREE.Group {
   const group = new THREE.Group();
   const isCl  = d.isCluster;
-  const dotR  = isCl ? 0.5 : 0.25;
+  const dotR  = isCl ? 0.85 : 0.55;
   const color = isCl ? 0xf59e0b : 0x3b82f6;
 
   group.add(new THREE.Mesh(
-    new THREE.SphereGeometry(dotR + 0.08, 16, 16),
+    new THREE.SphereGeometry(dotR + 0.12, 16, 16),
     new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide })
   ));
   group.add(new THREE.Mesh(
@@ -92,7 +92,7 @@ function makeMarkerGroup(d: any): THREE.Group {
     ? String(d.treks?.length ?? "?")
     : (d.name?.length > 18 ? d.name.slice(0, 16).trimEnd() + "…" : (d.name || ""));
   const label = makeLabelSprite(labelText);
-  label.position.set(0, dotR + 0.6, 0);
+  label.position.set(0, dotR + 0.9, 0);
   group.add(label);
 
   const tag = (obj: any) => { obj.__trek = d; };
