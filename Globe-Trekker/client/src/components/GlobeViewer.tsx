@@ -40,7 +40,6 @@ function getPopularityBucket(s: any) {
   return !s ? "Hidden Gem" : s >= 8 ? "Iconic" : s >= 5 ? "Popular" : "Hidden Gem";
 }
 
-// Coordinate conversion — verified against three-globe source
 function latLngToVec3(lat: number, lng: number, alt = 0.01, R = 100): THREE.Vector3 {
   const DEG2RAD = Math.PI / 180;
   const phi   = (90 - lat) * DEG2RAD;
@@ -69,13 +68,11 @@ function makeLabelSprite(text: string): THREE.Sprite {
     map: new THREE.CanvasTexture(canvas),
     transparent: true,
     depthWrite: false,
-    // FIX 1: depthTest:false stops the globe mesh from clipping the label
-    // as markers rotate near the limb — labels no longer sink into the surface.
-    depthTest: false,
+    // Keep depthTest ON so the globe occludes dots on the back face correctly.
+    // Visibility of labels is handled per-frame via opacity in the RAF loop below.
+    depthTest: true,
   });
   const sprite = new THREE.Sprite(mat);
-  // renderOrder:999 ensures sprite draws after the globe mesh — always on top.
-  sprite.renderOrder = 999;
   sprite.scale.set(tw / 32, th / 32, 1);
   return sprite;
 }
@@ -83,11 +80,12 @@ function makeLabelSprite(text: string): THREE.Sprite {
 function makeMarkerGroup(d: any): THREE.Group {
   const group = new THREE.Group();
   const isCl  = d.isCluster;
-  const dotR  = isCl ? 1.2 : 1.0;
+  // 1.5× bigger than the previous 1.2 / 1.0
+  const dotR  = isCl ? 1.8 : 1.5;
   const color = isCl ? 0xf59e0b : 0x3b82f6;
 
   group.add(new THREE.Mesh(
-    new THREE.SphereGeometry(dotR + 0.25, 16, 16),
+    new THREE.SphereGeometry(dotR + 0.30, 16, 16),
     new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide })
   ));
   group.add(new THREE.Mesh(
@@ -99,8 +97,12 @@ function makeMarkerGroup(d: any): THREE.Group {
     ? String(d.treks?.length ?? "?")
     : (d.name?.length > 18 ? d.name.slice(0, 16).trimEnd() + "…" : (d.name || ""));
   const label = makeLabelSprite(labelText);
-  label.position.set(0, dotR + 0.9, 0);
+  // Moved further from marker
+  label.position.set(0, dotR + 1.8, 0);
   group.add(label);
+
+  // Store label ref for visibility control in RAF loop
+  (group as any).__label = label;
 
   const tag = (obj: any) => { obj.__trek = d; };
   tag(group); group.children.forEach(tag);
@@ -111,8 +113,9 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
   const isEmbed = useMemo(() =>
     new URLSearchParams(window.location.search).get("embed") === "true", []);
 
-  const globeEl = useRef<GlobeMethods | undefined>(undefined);
+  const globeEl      = useRef<GlobeMethods | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
+  const rafRef       = useRef<number>(0);
 
   const [dimensions, setDimensions] = useState(() => ({
     width: window.innerWidth, height: window.innerHeight,
@@ -127,6 +130,50 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
+  }, []);
+
+  // ── Per-frame label visibility based on whether marker faces the camera ────
+  // Strategy: dot product of the marker's world position (normalised) against
+  // the camera direction. If dot < threshold the marker is on the back face →
+  // hide its label by setting opacity to 0. The dot meshes are left alone
+  // (depthTest handles them correctly already).
+  // This replaces the previous depthTest:false approach which caused labels
+  // to show through the globe from the other side.
+  useEffect(() => {
+    const _tmpCamDir = new THREE.Vector3();
+    const _tmpPos    = new THREE.Vector3();
+
+    const tick = () => {
+      rafRef.current = requestAnimationFrame(tick);
+      const camera = (globeEl.current as any)?.camera?.();
+      const scene  = (globeEl.current as any)?.scene?.();
+      if (!camera || !scene) return;
+
+      // Unit vector from globe centre toward camera
+      _tmpCamDir.copy(camera.position).normalize();
+
+      scene.traverse((obj: any) => {
+        if (!obj.__label) return; // only marker groups
+        const label = obj.__label as THREE.Sprite;
+
+        // World position of the group (= surface point)
+        obj.getWorldPosition(_tmpPos);
+        _tmpPos.normalize();
+
+        // dot > 0  → facing camera (front half) → visible
+        // dot < 0  → away from camera (back half) → hidden
+        // We use a small positive threshold (0.05) so labels fade out
+        // slightly before the limb, avoiding the half-visible edge case.
+        const dot = _tmpPos.dot(_tmpCamDir);
+        const opacity = dot > 0.05 ? 1 : 0;
+        if ((label.material as THREE.SpriteMaterial).opacity !== opacity) {
+          (label.material as THREE.SpriteMaterial).opacity = opacity;
+        }
+      });
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
   }, []);
 
   const { selectedTrekId, setSelectedTrekId } = useTrekStore();
@@ -186,7 +233,7 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     obj.rotateX(Math.PI);
   }, []);
 
-  // ── Unified selection — shared by both click handler and touch fallback ────
+  // Unified selection — shared by click handler and touch fallback
   const fireSelection = useCallback((d: any) => {
     if (!d) return;
     setSelectedTrekId(d.id);
@@ -206,12 +253,8 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     fireSelection(node?.__trek);
   }, [fireSelection]);
 
-  // FIX 2: Direct pointerdown raycasting for embed/mobile
-  // react-globe.gl's onCustomLayerClick fires on the 'click' event which on
-  // mobile fires ~300ms after touchend. Inside an iframe this delay causes the
-  // event to be silently dropped by the browser before it reaches our handler.
-  // We attach a pointerdown listener directly to the WebGL canvas and raycast
-  // ourselves — this fires immediately on first touch contact, no delay.
+  // Direct pointerdown raycasting for embed/mobile — fires immediately on touch
+  // rather than waiting for the delayed 'click' event that gets dropped in iframes
   useEffect(() => {
     if (!isEmbed) return;
 
