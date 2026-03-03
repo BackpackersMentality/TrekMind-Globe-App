@@ -55,37 +55,35 @@ function latLngToVec3(lat: number, lng: number, alt = 0.01, R = 100): THREE.Vect
 function makeLabelSprite(text: string): THREE.Sprite {
   const canvas = document.createElement("canvas");
   const ctx    = canvas.getContext("2d")!;
-  // Font size 44px — canvas height 66px (1.5× font size) gives full room for
-  // ascenders + descenders with no clipping. Previous th=34 was smaller than
-  // the font size itself, which is why text was vertically cut off.
-  const font = "bold 44px sans-serif";
+  const font   = "bold 44px sans-serif";
   ctx.font = font;
-  const tw = Math.ceil(ctx.measureText(text).width) + 24; // padding each side
-  const th = 66;
+  const tw = Math.ceil(ctx.measureText(text).width) + 32; // horizontal padding
+  const th = 80; // generous height — 44px font needs ~66px, extra 14px prevents any clipping
   canvas.width  = tw;
   canvas.height = th;
   ctx.font = font;
-  ctx.shadowColor = "rgba(0,0,0,1)";
-  ctx.shadowBlur  = 8;
-  ctx.fillStyle   = "#ffffff";
+  ctx.shadowColor  = "rgba(0,0,0,0.9)";
+  ctx.shadowBlur   = 10;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 2;
+  ctx.fillStyle    = "#ffffff";
   ctx.textBaseline = "middle";
-  ctx.fillText(text, 12, th / 2);
+  ctx.fillText(text, 16, th / 2);
   const mat = new THREE.SpriteMaterial({
     map: new THREE.CanvasTexture(canvas),
     transparent: true,
     depthWrite: false,
-    depthTest: true, // globe occludes dots on back face correctly
+    depthTest: true,
   });
   const sprite = new THREE.Sprite(mat);
-  // Scale divisor 32 keeps visual size the same as before
-  sprite.scale.set(tw / 32, th / 32, 1);
+  sprite.scale.set(tw / 30, th / 30, 1);
   return sprite;
 }
 
 function makeMarkerGroup(d: any): THREE.Group {
   const group = new THREE.Group();
   const isCl  = d.isCluster;
-  const dotR  = isCl ? 1.8 : 1.5;  // 1.5× the original 1.2 / 1.0
+  const dotR  = isCl ? 1.8 : 1.5;
   const color = isCl ? 0xf59e0b : 0x3b82f6;
 
   group.add(new THREE.Mesh(
@@ -97,17 +95,15 @@ function makeMarkerGroup(d: any): THREE.Group {
     new THREE.MeshBasicMaterial({ color })
   ));
 
-  // Allow up to 22 chars before truncating — previously 16 was cutting "Fisherman's Trail" etc.
   const labelText = isCl
     ? String(d.treks?.length ?? "?")
     : (d.name?.length > 22 ? d.name.slice(0, 20).trimEnd() + "…" : (d.name || ""));
   const label = makeLabelSprite(labelText);
-  label.position.set(0, dotR + 1.8, 0);
+  // Push label well clear of the dot so the canvas top never clips on the surface
+  label.position.set(0, dotR + 2.8, 0);
   group.add(label);
 
-  // Store label ref so the RAF visibility loop can toggle it
   (group as any).__label = label;
-
   const tag = (obj: any) => { obj.__trek = d; };
   tag(group); group.children.forEach(tag);
   return group;
@@ -137,8 +133,7 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     return () => ro.disconnect();
   }, []);
 
-  // Per-frame label visibility — hide labels whose marker is on the back face.
-  // Dot product of surface-normal vs camera direction: negative = behind globe.
+  // Hide labels on back face via dot-product check each frame
   useEffect(() => {
     const camDir = new THREE.Vector3();
     const pos    = new THREE.Vector3();
@@ -223,7 +218,6 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     obj.rotateX(Math.PI);
   }, []);
 
-  // Shared selection logic used by both mouse click and touch fallback
   const fireSelection = useCallback((d: any) => {
     if (!d) return;
     setSelectedTrekId(d.id);
@@ -243,9 +237,6 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     fireSelection(node?.__trek);
   }, [fireSelection]);
 
-  // Direct pointerdown raycasting for embed/mobile.
-  // 'click' events fire 300ms after touchend and get silently dropped inside
-  // iframes — pointerdown fires immediately on first touch contact.
   useEffect(() => {
     if (!isEmbed) return;
     const attach = () => {
