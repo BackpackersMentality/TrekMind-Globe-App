@@ -73,19 +73,19 @@ function makeLabelSprite(text: string): THREE.Sprite {
   });
   const sprite = new THREE.Sprite(mat);
   // Base scale — will be multiplied by altitude scale in customThreeObjectUpdate
-  sprite.scale.set(tw / 38, th / 38, 1);
+  sprite.scale.set(tw / 19, th / 19, 1);
   return sprite;
 }
 
 function makeMarkerGroup(d: any): THREE.Group {
   const group = new THREE.Group();
   const isCl  = d.isCluster;
-  const dotR  = isCl ? 1.1 : 0.75;
+  const dotR  = isCl ? 2.2 : 1.5;
   const color = isCl ? 0xf59e0b : 0x3b82f6;
 
   // White border sphere
   group.add(new THREE.Mesh(
-    new THREE.SphereGeometry(dotR + 0.15, 16, 16),
+    new THREE.SphereGeometry(dotR + 0.30, 16, 16),
     new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide })
   ));
   // Coloured dot
@@ -98,7 +98,7 @@ function makeMarkerGroup(d: any): THREE.Group {
     ? String(d.treks?.length ?? "?")
     : (d.name?.length > 18 ? d.name.slice(0, 16).trimEnd() + "…" : (d.name || ""));
   const label = makeLabelSprite(labelText);
-  label.position.set(0, dotR + 1.0, 0);
+  label.position.set(0, dotR + 2.0, 0);
   group.add(label);
 
   // Tag for click detection
