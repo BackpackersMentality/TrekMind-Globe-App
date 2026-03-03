@@ -40,21 +40,21 @@ function getPopularityBucket(s: any) {
   return !s ? "Hidden Gem" : s >= 8 ? "Iconic" : s >= 5 ? "Popular" : "Hidden Gem";
 }
 
-// ── Convert lat/lng to THREE.js world coordinates on the globe surface ────────
-// react-globe.gl uses a globe radius of 100 by default.
-// Altitude is a fraction of the radius (0.01 = 1% above surface).
+// ── Coordinate conversion matching react-globe.gl's internal system exactly ──
+// Verified against three-globe source: phi=(90-lat)*DEG2RAD, theta=lng*DEG2RAD
+// x = r*sin(phi)*sin(theta), y = r*cos(phi), z = r*sin(phi)*cos(theta)
 function latLngToVec3(lat: number, lng: number, alt = 0.01, R = 100): THREE.Vector3 {
-  const phi   = (90 - lat) * (Math.PI / 180);
-  const theta = (lng + 180) * (Math.PI / 180);
+  const DEG2RAD = Math.PI / 180;
+  const phi   = (90 - lat) * DEG2RAD;
+  const theta = lng * DEG2RAD;
   const r = R * (1 + alt);
   return new THREE.Vector3(
-    -r * Math.sin(phi) * Math.cos(theta),
-     r * Math.cos(phi),
-     r * Math.sin(phi) * Math.sin(theta)
+    r * Math.sin(phi) * Math.sin(theta),
+    r * Math.cos(phi),
+    r * Math.sin(phi) * Math.cos(theta)
   );
 }
 
-// ── Canvas text sprite ────────────────────────────────────────────────────────
 function makeLabelSprite(text: string): THREE.Sprite {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d")!;
@@ -73,7 +73,6 @@ function makeLabelSprite(text: string): THREE.Sprite {
   return sprite;
 }
 
-// ── Build marker group ────────────────────────────────────────────────────────
 function makeMarkerGroup(d: any): THREE.Group {
   const group = new THREE.Group();
   const isCl  = d.isCluster;
@@ -96,10 +95,8 @@ function makeMarkerGroup(d: any): THREE.Group {
   label.position.set(0, dotR + 0.6, 0);
   group.add(label);
 
-  // Tag for click detection
   const tag = (obj: any) => { obj.__trek = d; };
   tag(group); group.children.forEach(tag);
-
   return group;
 }
 
@@ -175,14 +172,12 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
 
   const customThreeObject = useCallback((d: any) => makeMarkerGroup(d), []);
 
-  // ── CRITICAL: position the group on the globe surface each frame ──────────
   const customThreeObjectUpdate = useCallback((obj: THREE.Object3D, d: any) => {
     const pos = latLngToVec3(d.lat, d.lng, 0.01);
     obj.position.copy(pos);
-    // Orient the group so "up" points away from globe centre
-    // This makes the label sit above the dot (not sideways)
+    // Point the group's Y-axis outward from globe centre so label sits above dot
     obj.lookAt(new THREE.Vector3(0, 0, 0));
-    obj.rotateX(Math.PI); // flip so label is above, not below
+    obj.rotateX(Math.PI);
   }, []);
 
   const handleClick = useCallback((obj: any) => {
