@@ -40,30 +40,25 @@ function getPopularityBucket(s: any) {
   return !s ? "Hidden Gem" : s >= 8 ? "Iconic" : s >= 5 ? "Popular" : "Hidden Gem";
 }
 
-// ── Coordinate conversion — exact match to three-globe's polar2Cartesian ────
-// Source: github.com/vasturiano/three-globe  src/utils/coordTranslate.js
-//   phi   = (90 - lat) * DEG2RAD
-//   theta = (lng - 90) * DEG2RAD   ← the critical detail: lng-90, not lng
-//   x = r * sin(phi) * cos(theta)
-//   y = r * cos(phi)
-//   z = r * sin(phi) * sin(theta)
-// Verified: Europe/Africa = negative Z, Americas = negative X, Asia = positive X
+// ── Convert lat/lng to THREE.js world coordinates on the globe surface ────────
+// react-globe.gl uses a globe radius of 100 by default.
+// Altitude is a fraction of the radius (0.01 = 1% above surface).
 function latLngToVec3(lat: number, lng: number, alt = 0.01, R = 100): THREE.Vector3 {
-  const DEG2RAD = Math.PI / 180;
-  const phi   = (90 - lat) * DEG2RAD;
-  const theta = (lng - 90) * DEG2RAD;
+  const phi   = (90 - lat) * (Math.PI / 180);
+  const theta = (lng + 180) * (Math.PI / 180);
   const r = R * (1 + alt);
   return new THREE.Vector3(
-    r * Math.sin(phi) * Math.cos(theta),
-    r * Math.cos(phi),
-    r * Math.sin(phi) * Math.sin(theta)
+    -r * Math.sin(phi) * Math.cos(theta),
+     r * Math.cos(phi),
+     r * Math.sin(phi) * Math.sin(theta)
   );
 }
 
+// ── Canvas text sprite ────────────────────────────────────────────────────────
 function makeLabelSprite(text: string): THREE.Sprite {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d")!;
-  const font = "bold 28px sans-serif";
+  const font = "bold 22px sans-serif";
   ctx.font = font;
   const tw = Math.ceil(ctx.measureText(text).width) + 20;
   const th = 34;
@@ -74,18 +69,19 @@ function makeLabelSprite(text: string): THREE.Sprite {
   ctx.fillText(text, 10, th / 2);
   const mat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, depthWrite: false });
   const sprite = new THREE.Sprite(mat);
-  sprite.scale.set(tw / 45, th / 45, 1);
+  sprite.scale.set(tw / 55, th / 55, 1);
   return sprite;
 }
 
+// ── Build marker group ────────────────────────────────────────────────────────
 function makeMarkerGroup(d: any): THREE.Group {
   const group = new THREE.Group();
   const isCl  = d.isCluster;
-  const dotR  = isCl ? 0.7 : 0.45;
+  const dotR  = isCl ? 0.5 : 0.25;
   const color = isCl ? 0xf59e0b : 0x3b82f6;
 
   group.add(new THREE.Mesh(
-    new THREE.SphereGeometry(dotR + 0.10, 16, 16),
+    new THREE.SphereGeometry(dotR + 0.08, 16, 16),
     new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide })
   ));
   group.add(new THREE.Mesh(
@@ -97,11 +93,13 @@ function makeMarkerGroup(d: any): THREE.Group {
     ? String(d.treks?.length ?? "?")
     : (d.name?.length > 18 ? d.name.slice(0, 16).trimEnd() + "…" : (d.name || ""));
   const label = makeLabelSprite(labelText);
-  label.position.set(0, dotR + 0.8, 0);
+  label.position.set(0, dotR + 0.6, 0);
   group.add(label);
 
+  // Tag for click detection
   const tag = (obj: any) => { obj.__trek = d; };
   tag(group); group.children.forEach(tag);
+
   return group;
 }
 
@@ -177,12 +175,14 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
 
   const customThreeObject = useCallback((d: any) => makeMarkerGroup(d), []);
 
+  // ── CRITICAL: position the group on the globe surface each frame ──────────
   const customThreeObjectUpdate = useCallback((obj: THREE.Object3D, d: any) => {
     const pos = latLngToVec3(d.lat, d.lng, 0.01);
     obj.position.copy(pos);
-    // Point the group's Y-axis outward from globe centre so label sits above dot
+    // Orient the group so "up" points away from globe centre
+    // This makes the label sit above the dot (not sideways)
     obj.lookAt(new THREE.Vector3(0, 0, 0));
-    obj.rotateX(Math.PI);
+    obj.rotateX(Math.PI); // flip so label is above, not below
   }, []);
 
   const handleClick = useCallback((obj: any) => {
