@@ -8,6 +8,15 @@ import { useFilterStore } from "../store/useFilterStore";
 import { SwipeableTrekCards } from "./SwipeableTrekCards";
 import { clusterTreks } from "../lib/clustering";
 
+// ── Zoom-scale helper ─────────────────────────────────────────────────────────
+// react-globe.gl default camera distance is ~300 units from globe centre
+const BASE_CAM_DIST = 300;
+function getCamScale(camera: THREE.Camera): number {
+  const dist = (camera as THREE.PerspectiveCamera).position.length();
+  // 1.0 at default zoom, grows when zoomed in, shrinks when zoomed out
+  return Math.max(0.5, Math.min(2.8, BASE_CAM_DIST / dist));
+}
+
 function getAccommodationCategory(raw = "") {
   const a = raw.toLowerCase();
   if (a.includes("teahouse")) return "Teahouses";
@@ -52,23 +61,24 @@ function latLngToVec3(lat: number, lng: number, alt = 0.01, R = 100): THREE.Vect
   );
 }
 
+// Larger base font (56px vs old 44px) for better readability
 function makeLabelSprite(text: string): THREE.Sprite {
   const canvas = document.createElement("canvas");
   const ctx    = canvas.getContext("2d")!;
-  const font   = "bold 44px sans-serif";
+  const font   = "bold 56px sans-serif";
   ctx.font = font;
-  const tw = Math.ceil(ctx.measureText(text).width) + 32; // horizontal padding
-  const th = 80; // generous height — 44px font needs ~66px, extra 14px prevents any clipping
+  const tw = Math.ceil(ctx.measureText(text).width) + 40;
+  const th = 96;
   canvas.width  = tw;
   canvas.height = th;
   ctx.font = font;
-  ctx.shadowColor  = "rgba(0,0,0,0.9)";
-  ctx.shadowBlur   = 10;
+  ctx.shadowColor   = "rgba(0,0,0,0.95)";
+  ctx.shadowBlur    = 12;
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 2;
   ctx.fillStyle    = "#ffffff";
   ctx.textBaseline = "middle";
-  ctx.fillText(text, 16, th / 2);
+  ctx.fillText(text, 20, th / 2);
   const mat = new THREE.SpriteMaterial({
     map: new THREE.CanvasTexture(canvas),
     transparent: true,
@@ -76,7 +86,7 @@ function makeLabelSprite(text: string): THREE.Sprite {
     depthTest: true,
   });
   const sprite = new THREE.Sprite(mat);
-  sprite.scale.set(tw / 30, th / 30, 1);
+  sprite.scale.set(tw / 28, th / 28, 1);
   return sprite;
 }
 
@@ -99,7 +109,6 @@ function makeMarkerGroup(d: any): THREE.Group {
     ? String(d.treks?.length ?? "?")
     : (d.name?.length > 22 ? d.name.slice(0, 20).trimEnd() + "…" : (d.name || ""));
   const label = makeLabelSprite(labelText);
-  // Push label well clear of the dot so the canvas top never clips on the surface
   label.position.set(0, dotR + 3.2, 0);
   group.add(label);
 
@@ -116,6 +125,7 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
   const globeEl      = useRef<GlobeMethods | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef       = useRef<number>(0);
+  const holdTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [dimensions, setDimensions] = useState(() => ({
     width: window.innerWidth, height: window.innerHeight,
@@ -133,7 +143,7 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     return () => ro.disconnect();
   }, []);
 
-  // Hide labels on back face via dot-product check each frame
+  // ── Per-frame: scale markers with zoom + hide back-face labels ─────────────
   useEffect(() => {
     const camDir = new THREE.Vector3();
     const pos    = new THREE.Vector3();
@@ -142,8 +152,16 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
       const camera = (globeEl.current as any)?.camera?.();
       const scene  = (globeEl.current as any)?.scene?.();
       if (!camera || !scene) return;
+
+      const scale = getCamScale(camera);
       camDir.copy(camera.position).normalize();
+
       scene.traverse((obj: any) => {
+        // Scale entire marker group with zoom
+        if (obj.__trek && obj.isGroup) {
+          obj.scale.setScalar(scale);
+        }
+        // Hide labels on back face
         if (!obj.__label) return;
         obj.getWorldPosition(pos);
         pos.normalize();
@@ -163,6 +181,34 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
   const swipeRef = useRef(setSwipeableTreks);
   useEffect(() => { swipeRef.current = setSwipeableTreks; }, []);
 
+  // ── Zoom functions ──────────────────────────────────────────────────────────
+  const zoomIn = useCallback(() => {
+    const c = (globeEl.current as any)?.camera?.();
+    if (c) c.position.multiplyScalar(0.85);
+  }, []);
+  const zoomOut = useCallback(() => {
+    const c = (globeEl.current as any)?.camera?.();
+    if (c) c.position.multiplyScalar(1.15);
+  }, []);
+
+  const startHold = useCallback((direction: "in" | "out") => {
+    // Fire once immediately on press, then repeat every 80ms while held
+    if (direction === "in") zoomIn(); else zoomOut();
+    holdTimerRef.current = setInterval(() => {
+      if (direction === "in") zoomIn(); else zoomOut();
+    }, 80);
+  }, [zoomIn, zoomOut]);
+
+  const stopHold = useCallback(() => {
+    if (holdTimerRef.current) {
+      clearInterval(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+  }, []);
+
+  // Cleanup hold timer on unmount
+  useEffect(() => () => stopHold(), [stopHold]);
+
   useEffect(() => {
     const onMsg = (e: MessageEvent) => {
       const { type, payload } = e.data || {};
@@ -174,12 +220,12 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
           duration: n(payload.duration), popularity: n(payload.popularity),
         });
       }
-      if (type === "TREKMIND_ZOOM_IN")  { const c = (globeEl.current as any)?.camera?.(); if (c) c.position.multiplyScalar(0.85); }
-      if (type === "TREKMIND_ZOOM_OUT") { const c = (globeEl.current as any)?.camera?.(); if (c) c.position.multiplyScalar(1.15); }
+      if (type === "TREKMIND_ZOOM_IN")  zoomIn();
+      if (type === "TREKMIND_ZOOM_OUT") zoomOut();
     };
     window.addEventListener("message", onMsg);
     return () => window.removeEventListener("message", onMsg);
-  }, []);
+  }, [zoomIn, zoomOut]);
 
   const filteredTreks = useMemo(() => {
     const f = embedFilters;
@@ -271,9 +317,37 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     return () => { clearInterval(iv); cleanup?.(); };
   }, [isEmbed, fireSelection]);
 
+  // ── Zoom button component (inline to access zoomIn/zoomOut/startHold/stopHold)
+  const ZoomBtn = ({ dir }: { dir: "in" | "out" }) => (
+    <button
+      style={{
+        width: 44, height: 44,
+        background: "rgba(255,255,255,0.92)",
+        border: "none", borderRadius: 8,
+        fontSize: 24, fontWeight: "bold", lineHeight: 1,
+        cursor: "pointer", display: "flex",
+        alignItems: "center", justifyContent: "center",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.35)",
+        userSelect: "none", WebkitUserSelect: "none",
+        touchAction: "none", color: "#1e293b",
+      }}
+      onMouseDown={() => startHold(dir)}
+      onMouseUp={stopHold}
+      onMouseLeave={stopHold}
+      onTouchStart={(e) => { e.preventDefault(); startHold(dir); }}
+      onTouchEnd={stopHold}
+      onTouchCancel={stopHold}
+      aria-label={dir === "in" ? "Zoom in" : "Zoom out"}
+    >
+      {dir === "in" ? "+" : "−"}
+    </button>
+  );
+
   return (
-    <div ref={containerRef}
-      style={{ position: "absolute", inset: 0, background: "#0a0a1a", overflow: "visible" }}>
+    <div
+      ref={containerRef}
+      style={{ position: "absolute", inset: 0, background: "#0a0a1a", overflow: "visible" }}
+    >
       <Globe
         ref={globeEl as any}
         width={dimensions.width}
@@ -294,6 +368,18 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
         atmosphereColor="#3a228a"
         atmosphereAltitude={0.15}
       />
+
+      {/* Zoom controls — only in standalone mode; embedded mode uses GlobeIntegration's buttons */}
+      {!isEmbed && (
+        <div style={{
+          position: "absolute", bottom: 24, right: 24, zIndex: 20,
+          display: "flex", flexDirection: "column", gap: 8,
+        }}>
+          <ZoomBtn dir="in" />
+          <ZoomBtn dir="out" />
+        </div>
+      )}
+
       {swipeableTreks && !hideCards && (
         <SwipeableTrekCards treks={swipeableTreks} initialIndex={0} onClose={() => setSwipeableTreks(null)} />
       )}
