@@ -83,11 +83,11 @@ function makeLabelSprite(text: string): THREE.Sprite {
 function makeMarkerGroup(d: any): THREE.Group {
   const group = new THREE.Group();
   const isCl  = d.isCluster;
-  const dotR  = isCl ? 1.8 : 1.5;
+  const dotR  = isCl ? 3.0 : 2.5;
   const color = isCl ? 0xf59e0b : 0x3b82f6;
 
   group.add(new THREE.Mesh(
-    new THREE.SphereGeometry(dotR + 0.30, 16, 16),
+    new THREE.SphereGeometry(dotR + 0.45, 16, 16),
     new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide })
   ));
   group.add(new THREE.Mesh(
@@ -100,7 +100,7 @@ function makeMarkerGroup(d: any): THREE.Group {
     : (d.name?.length > 22 ? d.name.slice(0, 20).trimEnd() + "…" : (d.name || ""));
   const label = makeLabelSprite(labelText);
   // Push label well clear of the dot so the canvas top never clips on the surface
-  label.position.set(0, dotR + 2.8, 0);
+  label.position.set(0, dotR + 3.2, 0);
   group.add(label);
 
   (group as any).__label = label;
