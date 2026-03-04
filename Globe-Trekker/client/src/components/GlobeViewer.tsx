@@ -13,8 +13,9 @@ import { clusterTreks } from "../lib/clustering";
 const BASE_CAM_DIST = 300;
 function getCamScale(camera: THREE.Camera): number {
   const dist = (camera as THREE.PerspectiveCamera).position.length();
-  // 1.0 at default zoom, grows when zoomed in, shrinks when zoomed out
-  return Math.max(0.5, Math.min(2.8, BASE_CAM_DIST / dist));
+  // Inverted: 1.0 at default zoom, SHRINKS when zoomed in, grows when zoomed out
+  // Markers become small and precise as you get closer to the coordinates
+  return Math.max(0.2, Math.min(2.0, dist / BASE_CAM_DIST));
 }
 
 function getAccommodationCategory(raw = "") {
