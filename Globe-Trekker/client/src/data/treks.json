@@ -1216,6 +1216,25 @@
     "season": "May-September",
     "popularityScore": 5
   },
+   {
+    "id": "timberline",
+    "name": "Mount Hood Timberline",
+    "tier": 3,
+    "region": "North America",
+    "country": "USA",
+    "terrain": "Alpine, forest",
+    "accommodation": "Camping",
+    "keyFeatures": "Pacific Northwest, glaciers, old-growth forest",
+    "distance": "65 km",
+    "totalDays": "4 days",
+    "maxAltitude": "2200m",
+    "permits": "Required",
+    "latitude": 45.37,
+    "longitude": -121.69,
+    "imageFilename": "timberline",
+    "season": "June-October",
+    "popularityScore": 7
+  },
   {
     "id": "toublak",
     "name": "Toubkal Circuit",
