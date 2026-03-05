@@ -1,23 +1,13 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import Globe from "react-globe.gl";
 import type { GlobeMethods } from "react-globe.gl";
-import * as THREE from "three";
 import { TREKS } from "../data/treks";
 import { useTrekStore } from "../store/useTrekStore";
 import { useFilterStore } from "../store/useFilterStore";
 import { SwipeableTrekCards } from "./SwipeableTrekCards";
 import { clusterTreks } from "../lib/clustering";
 
-// ── Zoom-scale helper ─────────────────────────────────────────────────────────
-// react-globe.gl default camera distance is ~300 units from globe centre
-const BASE_CAM_DIST = 300;
-function getCamScale(camera: THREE.Camera): number {
-  const dist = (camera as THREE.PerspectiveCamera).position.length();
-  // Inverted: 1.0 at default zoom, SHRINKS when zoomed in, grows when zoomed out
-  // Markers become small and precise as you get closer to the coordinates
-  return Math.max(0.2, Math.min(2.0, dist / BASE_CAM_DIST));
-}
-
+// ── Filter helpers ────────────────────────────────────────────────────────────
 function getAccommodationCategory(raw = "") {
   const a = raw.toLowerCase();
   if (a.includes("teahouse")) return "Teahouses";
@@ -50,73 +40,128 @@ function getPopularityBucket(s: any) {
   return !s ? "Hidden Gem" : s >= 8 ? "Iconic" : s >= 5 ? "Popular" : "Hidden Gem";
 }
 
-function latLngToVec3(lat: number, lng: number, alt = 0.01, R = 100): THREE.Vector3 {
-  const DEG2RAD = Math.PI / 180;
-  const phi   = (90 - lat) * DEG2RAD;
-  const theta = lng * DEG2RAD;
-  const r = R * (1 + alt);
-  return new THREE.Vector3(
-    r * Math.sin(phi) * Math.sin(theta),
-    r * Math.cos(phi),
-    r * Math.sin(phi) * Math.cos(theta)
-  );
-}
+// ── HTML pin factory ──────────────────────────────────────────────────────────
+function makePin(d: any, selectedTrekId: string | null, fireSelection: (d: any) => void): HTMLElement {
+  const isCluster  = !!d.isCluster;
+  const trekId     = isCluster ? null : String(d.id);
+  const isSelected = !isCluster && trekId === String(selectedTrekId);
+  const name       = isCluster
+    ? `${d.treks?.[0]?.name ?? ""} +${(d.treks?.length ?? 1) - 1}`
+    : (d.name ?? "");
 
-// Larger base font (56px vs old 44px) for better readability
-function makeLabelSprite(text: string): THREE.Sprite {
-  const canvas = document.createElement("canvas");
-  const ctx    = canvas.getContext("2d")!;
-  const font   = "bold 56px sans-serif";
-  ctx.font = font;
-  const tw = Math.ceil(ctx.measureText(text).width) + 40;
-  const th = 96;
-  canvas.width  = tw;
-  canvas.height = th;
-  ctx.font = font;
-  ctx.shadowColor   = "rgba(0,0,0,0.95)";
-  ctx.shadowBlur    = 12;
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 2;
-  ctx.fillStyle    = "#ffffff";
-  ctx.textBaseline = "middle";
-  ctx.fillText(text, 20, th / 2);
-  const mat = new THREE.SpriteMaterial({
-    map: new THREE.CanvasTexture(canvas),
-    transparent: true,
-    depthWrite: false,
-    depthTest: true,
+  const pinColor    = isCluster ? "#f59e0b" : "#3b82f6";
+  const selectedRing = isSelected
+    ? `box-shadow: 0 0 0 3px #fff, 0 0 0 5px ${pinColor}, 0 0 16px ${pinColor}88;`
+    : `box-shadow: 0 0 10px ${pinColor}66;`;
+
+  const el = document.createElement("div");
+  el.style.cssText = `
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    pointer-events: auto;
+    transform-origin: bottom center;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  `;
+
+  el.innerHTML = `
+    <div style="
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transform: ${isSelected ? "scale(1.3)" : "scale(1)"};
+      transition: transform 0.2s ease;
+    ">
+      <!-- Label: hidden by default, shown via JS altitude check -->
+      <div class="pin-label" style="
+        position: absolute;
+        bottom: calc(100% + 4px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(10,15,30,0.88);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 600;
+        font-family: system-ui, -apple-system, sans-serif;
+        white-space: nowrap;
+        padding: 3px 8px;
+        border-radius: 6px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        border: 1px solid rgba(255,255,255,0.15);
+        text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+        letter-spacing: 0.01em;
+      ">${name}</div>
+
+      <!-- Pin head -->
+      <div style="
+        width: 22px; height: 22px;
+        border-radius: 50%;
+        background: ${pinColor};
+        border: 2.5px solid #fff;
+        ${selectedRing}
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: box-shadow 0.2s;
+      ">
+        <div style="
+          width: 6px; height: 6px;
+          border-radius: 50%;
+          background: #fff;
+          opacity: 0.55;
+        "></div>
+      </div>
+
+      ${isCluster ? `
+        <div style="
+          position: absolute;
+          top: -5px; right: -6px;
+          background: #fff;
+          color: ${pinColor};
+          font-size: 9px;
+          font-weight: 800;
+          font-family: system-ui, sans-serif;
+          padding: 1px 4px;
+          border-radius: 999px;
+          border: 1.5px solid ${pinColor};
+          line-height: 1.4;
+          pointer-events: none;
+        ">${d.treks?.length ?? ""}</div>
+      ` : ""}
+
+      <!-- Stem -->
+      <div style="
+        width: 3px; height: 7px;
+        background: ${pinColor};
+        margin-top: -1px;
+        border-radius: 0 0 2px 2px;
+      "></div>
+
+      <!-- Shadow -->
+      <div style="
+        width: 9px; height: 3px;
+        background: rgba(0,0,0,0.2);
+        border-radius: 50%;
+        filter: blur(1px);
+        margin-top: 1px;
+      "></div>
+    </div>
+  `;
+
+  el.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    fireSelection(d);
   });
-  const sprite = new THREE.Sprite(mat);
-  sprite.scale.set(tw / 28, th / 28, 1);
-  return sprite;
-}
 
-function makeMarkerGroup(d: any): THREE.Group {
-  const group = new THREE.Group();
-  const isCl  = d.isCluster;
-  const dotR  = isCl ? 3.0 : 2.5;
-  const color = isCl ? 0xf59e0b : 0x3b82f6;
-
-  group.add(new THREE.Mesh(
-    new THREE.SphereGeometry(dotR + 0.45, 16, 16),
-    new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide })
-  ));
-  group.add(new THREE.Mesh(
-    new THREE.SphereGeometry(dotR, 16, 16),
-    new THREE.MeshBasicMaterial({ color })
-  ));
-
-  const labelText = isCl
-    ? String(d.treks?.length ?? "?")
-    : (d.name?.length > 22 ? d.name.slice(0, 20).trimEnd() + "…" : (d.name || ""));
-  const label = makeLabelSprite(labelText);
-  label.position.set(0, dotR + 3.2, 0);
-  group.add(label);
-
-  (group as any).__label = label;
-  const tag = (obj: any) => { obj.__trek = d; };
-  tag(group); group.children.forEach(tag);
-  return group;
+  return el;
 }
 
 export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
@@ -125,7 +170,6 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
 
   const globeEl      = useRef<GlobeMethods | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
-  const rafRef       = useRef<number>(0);
   const holdTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [dimensions, setDimensions] = useState(() => ({
@@ -144,37 +188,6 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     return () => ro.disconnect();
   }, []);
 
-  // ── Per-frame: scale markers with zoom + hide back-face labels ─────────────
-  useEffect(() => {
-    const camDir = new THREE.Vector3();
-    const pos    = new THREE.Vector3();
-    const tick = () => {
-      rafRef.current = requestAnimationFrame(tick);
-      const camera = (globeEl.current as any)?.camera?.();
-      const scene  = (globeEl.current as any)?.scene?.();
-      if (!camera || !scene) return;
-
-      const scale = getCamScale(camera);
-      camDir.copy(camera.position).normalize();
-
-      scene.traverse((obj: any) => {
-        // Scale entire marker group with zoom
-        if (obj.__trek && obj.isGroup) {
-          obj.scale.setScalar(scale);
-        }
-        // Hide labels on back face
-        if (!obj.__label) return;
-        obj.getWorldPosition(pos);
-        pos.normalize();
-        const opacity = pos.dot(camDir) > 0.05 ? 1 : 0;
-        const mat = (obj.__label as THREE.Sprite).material as THREE.SpriteMaterial;
-        if (mat.opacity !== opacity) mat.opacity = opacity;
-      });
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, []);
-
   const { selectedTrekId, setSelectedTrekId } = useTrekStore();
   const { continent, tier } = useFilterStore();
   const [embedFilters, setEmbedFilters] = useState<any>(null);
@@ -182,34 +195,98 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
   const swipeRef = useRef(setSwipeableTreks);
   useEffect(() => { swipeRef.current = setSwipeableTreks; }, []);
 
-  // ── Zoom functions ──────────────────────────────────────────────────────────
+  // ── Zoom via pointOfView altitude (smooth, works with HTML pins) ──────────
   const zoomIn = useCallback(() => {
-    const c = (globeEl.current as any)?.camera?.();
-    if (c) c.position.multiplyScalar(0.85);
-  }, []);
-  const zoomOut = useCallback(() => {
-    const c = (globeEl.current as any)?.camera?.();
-    if (c) c.position.multiplyScalar(1.15);
+    if (!globeEl.current) return;
+    const cur = globeEl.current.pointOfView();
+    globeEl.current.pointOfView({ altitude: Math.max(0.15, cur.altitude - 0.25) }, 350);
   }, []);
 
-  const startHold = useCallback((direction: "in" | "out") => {
-    // Fire once immediately on press, then repeat every 80ms while held
-    if (direction === "in") zoomIn(); else zoomOut();
-    holdTimerRef.current = setInterval(() => {
-      if (direction === "in") zoomIn(); else zoomOut();
-    }, 80);
-  }, [zoomIn, zoomOut]);
+  const zoomOut = useCallback(() => {
+    if (!globeEl.current) return;
+    const cur = globeEl.current.pointOfView();
+    globeEl.current.pointOfView({ altitude: Math.min(4.5, cur.altitude + 0.25) }, 350);
+  }, []);
 
   const stopHold = useCallback(() => {
-    if (holdTimerRef.current) {
-      clearInterval(holdTimerRef.current);
-      holdTimerRef.current = null;
-    }
+    if (holdTimerRef.current) { clearInterval(holdTimerRef.current); holdTimerRef.current = null; }
   }, []);
 
-  // Cleanup hold timer on unmount
   useEffect(() => () => stopHold(), [stopHold]);
 
+  // ── Native pointer events on zoom buttons (bypasses WebGL event capture) ──
+  const zoomInBtnRef  = useRef<HTMLButtonElement>(null);
+  const zoomOutBtnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const attach = (btn: HTMLButtonElement | null, fn: () => void) => {
+      if (!btn) return;
+      const onDown = (e: PointerEvent) => {
+        e.preventDefault(); e.stopPropagation();
+        fn();
+        holdTimerRef.current = setInterval(fn, 120);
+      };
+      const onUp = () => stopHold();
+      btn.addEventListener("pointerdown",   onDown);
+      btn.addEventListener("pointerup",     onUp);
+      btn.addEventListener("pointerleave",  onUp);
+      btn.addEventListener("pointercancel", onUp);
+      return () => {
+        btn.removeEventListener("pointerdown",   onDown);
+        btn.removeEventListener("pointerup",     onUp);
+        btn.removeEventListener("pointerleave",  onUp);
+        btn.removeEventListener("pointercancel", onUp);
+      };
+    };
+    const c1 = attach(zoomInBtnRef.current,  zoomIn);
+    const c2 = attach(zoomOutBtnRef.current, zoomOut);
+    return () => { c1?.(); c2?.(); };
+  }, [zoomIn, zoomOut, stopHold]);
+
+  // ── Track altitude → update pin scale CSS var + label visibility ──────────
+  useEffect(() => {
+    let attached = false;
+    const tryAttach = () => {
+      const controls = (globeEl.current as any)?.controls?.();
+      if (!controls || attached) return;
+      attached = true;
+
+      const onCamChange = () => {
+        const globe  = globeEl.current as any;
+        const camera = globe?.camera?.();
+        const radius = globe?.getGlobeRadius?.();
+        if (!camera || !radius) return;
+
+        const alt = Math.max(0.1, camera.position.length() / radius - 1);
+
+        // Pin scale: 1.0 at alt 2.5, shrinks toward 0.35 when zoomed in
+        const pinScale = Math.max(0.35, Math.min(1.6, alt / 2.5));
+        document.documentElement.style.setProperty("--pin-scale", pinScale.toFixed(3));
+
+        // Labels: show below alt 1.2 (zoomed in enough to read them)
+        const showLabels = alt < 1.2;
+        document.querySelectorAll<HTMLElement>(".pin-label").forEach(l => {
+          l.style.opacity = showLabels ? "1" : "0";
+        });
+      };
+
+      controls.addEventListener("change", onCamChange);
+    };
+
+    // Poll briefly until controls are ready
+    const iv = setInterval(() => { tryAttach(); if (attached) clearInterval(iv); }, 200);
+    return () => clearInterval(iv);
+  }, []);
+
+  // ── Globe init ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!globeEl.current) return;
+    const controls = (globeEl.current as any)?.controls?.();
+    if (controls) { controls.autoRotate = false; controls.enableDamping = true; }
+    globeEl.current.pointOfView({ altitude: 2.5 }, 0);
+  }, []);
+
+  // ── postMessage (embed filters + zoom from parent) ────────────────────────
   useEffect(() => {
     const onMsg = (e: MessageEvent) => {
       const { type, payload } = e.data || {};
@@ -228,6 +305,7 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     return () => window.removeEventListener("message", onMsg);
   }, [zoomIn, zoomOut]);
 
+  // ── Filter treks ───────────────────────────────────────────────────────────
   const filteredTreks = useMemo(() => {
     const f = embedFilters;
     return (TREKS as any[]).filter(trek => {
@@ -256,18 +334,10 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
       ),
   [filteredTreks]);
 
-  const customThreeObject = useCallback((d: any) => makeMarkerGroup(d), []);
-
-  const customThreeObjectUpdate = useCallback((obj: THREE.Object3D, d: any) => {
-    const pos = latLngToVec3(d.lat, d.lng, 0.01);
-    obj.position.copy(pos);
-    obj.lookAt(new THREE.Vector3(0, 0, 0));
-    obj.rotateX(Math.PI);
-  }, []);
-
+  // ── Selection ──────────────────────────────────────────────────────────────
   const fireSelection = useCallback((d: any) => {
     if (!d) return;
-    setSelectedTrekId(d.id);
+    setSelectedTrekId(d.isCluster ? null : d.id);
     const payload = d.isCluster
       ? d.treks.map((t: any) => ({ id: t.id }))
       : [{ id: d.id }];
@@ -278,70 +348,9 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     }
   }, [isEmbed, setSelectedTrekId]);
 
-  const handleClick = useCallback((obj: any) => {
-    let node: any = obj;
-    while (node && !node.__trek) node = node.parent;
-    fireSelection(node?.__trek);
-  }, [fireSelection]);
-
-  useEffect(() => {
-    if (!isEmbed) return;
-    const attach = () => {
-      const renderer = (globeEl.current as any)?.renderer?.();
-      const camera   = (globeEl.current as any)?.camera?.();
-      const scene    = (globeEl.current as any)?.scene?.();
-      if (!renderer || !camera || !scene) return null;
-      const canvas    = renderer.domElement;
-      const raycaster = new THREE.Raycaster();
-      const onPointerDown = (e: PointerEvent) => {
-        const rect = canvas.getBoundingClientRect();
-        const x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
-        const y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
-        raycaster.setFromCamera({ x, y }, camera);
-        const hits = raycaster.intersectObjects(scene.children, true);
-        for (const hit of hits) {
-          let node: any = hit.object;
-          while (node && !node.__trek) node = node.parent;
-          if (node?.__trek) { e.stopPropagation(); fireSelection(node.__trek); return; }
-        }
-      };
-      canvas.addEventListener("pointerdown", onPointerDown);
-      return () => canvas.removeEventListener("pointerdown", onPointerDown);
-    };
-    let cleanup: (() => void) | null = null;
-    let tries = 0;
-    const iv = setInterval(() => {
-      const r = attach();
-      if (r !== null) { clearInterval(iv); if (r) cleanup = r; }
-      else if (tries++ > 20) clearInterval(iv);
-    }, 200);
-    return () => { clearInterval(iv); cleanup?.(); };
-  }, [isEmbed, fireSelection]);
-
-  // ── Zoom button component (inline to access zoomIn/zoomOut/startHold/stopHold)
-  const ZoomBtn = ({ dir }: { dir: "in" | "out" }) => (
-    <button
-      style={{
-        width: 44, height: 44,
-        background: "rgba(255,255,255,0.92)",
-        border: "none", borderRadius: 8,
-        fontSize: 24, fontWeight: "bold", lineHeight: 1,
-        cursor: "pointer", display: "flex",
-        alignItems: "center", justifyContent: "center",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.35)",
-        userSelect: "none", WebkitUserSelect: "none",
-        touchAction: "none", color: "#1e293b",
-      }}
-      onMouseDown={() => startHold(dir)}
-      onMouseUp={stopHold}
-      onMouseLeave={stopHold}
-      onTouchStart={(e) => { e.preventDefault(); startHold(dir); }}
-      onTouchEnd={stopHold}
-      onTouchCancel={stopHold}
-      aria-label={dir === "in" ? "Zoom in" : "Zoom out"}
-    >
-      {dir === "in" ? "+" : "−"}
-    </button>
+  const htmlElement = useCallback(
+    (d: any) => makePin(d, selectedTrekId, fireSelection),
+    [selectedTrekId, fireSelection],
   );
 
   return (
@@ -356,11 +365,10 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
         globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
         bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
         backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
-        customLayerData={displayData}
-        customThreeObject={customThreeObject}
-        customThreeObjectUpdate={customThreeObjectUpdate}
-        customLayerLabel={() => ""}
-        onCustomLayerClick={handleClick}
+        htmlElementsData={displayData}
+        htmlLat={(d: any) => d.lat}
+        htmlLng={(d: any) => d.lng}
+        htmlElement={htmlElement}
         onGlobeClick={() => {
           setSelectedTrekId(null);
           setSwipeableTreks(null);
@@ -370,19 +378,42 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
         atmosphereAltitude={0.15}
       />
 
-      {/* Zoom controls — only in standalone mode; embedded mode uses GlobeIntegration's buttons */}
+      {/* Zoom controls — standalone only; embed handled by GlobeIntegration */}
       {!isEmbed && (
         <div style={{
-          position: "absolute", bottom: 24, right: 24, zIndex: 20,
+          position: "absolute", bottom: 24, right: 24, zIndex: 30,
           display: "flex", flexDirection: "column", gap: 8,
+          pointerEvents: "auto",
         }}>
-          <ZoomBtn dir="in" />
-          <ZoomBtn dir="out" />
+          {(["in", "out"] as const).map(dir => (
+            <button
+              key={dir}
+              ref={dir === "in" ? zoomInBtnRef : zoomOutBtnRef}
+              style={{
+                width: 44, height: 44,
+                background: "rgba(255,255,255,0.92)",
+                border: "none", borderRadius: 8,
+                fontSize: 24, fontWeight: "bold", lineHeight: 1,
+                cursor: "pointer", display: "flex",
+                alignItems: "center", justifyContent: "center",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.35)",
+                userSelect: "none", WebkitUserSelect: "none",
+                touchAction: "none", color: "#1e293b",
+              }}
+              aria-label={dir === "in" ? "Zoom in" : "Zoom out"}
+            >
+              {dir === "in" ? "+" : "−"}
+            </button>
+          ))}
         </div>
       )}
 
       {swipeableTreks && !hideCards && (
-        <SwipeableTrekCards treks={swipeableTreks} initialIndex={0} onClose={() => setSwipeableTreks(null)} />
+        <SwipeableTrekCards
+          treks={swipeableTreks}
+          initialIndex={0}
+          onClose={() => setSwipeableTreks(null)}
+        />
       )}
     </div>
   );
