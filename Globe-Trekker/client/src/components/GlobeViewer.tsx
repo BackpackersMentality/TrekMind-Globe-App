@@ -30,7 +30,8 @@ function getTerrainCategory(raw = "") {
   if (t.includes("alpine")) return "Alpine";
   return "Alpine";
 }
-function getDurationBucket(d: any) {
+function getDurationBucket(d: any, tier?: number) {
+  if (tier === 4) return "Thru";
   const m = String(d ?? "").match(/\d+/);
   if (!m) return "Medium";
   const n = parseInt(m[0]);
@@ -49,7 +50,15 @@ function makePin(d: any, selectedTrekId: string | null, fireSelection: (d: any) 
     ? `${d.treks?.[0]?.name ?? ""} +${(d.treks?.length ?? 1) - 1}`
     : (d.name ?? "");
 
-  const pinColor    = isCluster ? "#f59e0b" : "#3b82f6";
+  // Tier-coloured pins: T1 gold · T2 blue · T3 slate · T4 Thru purple · cluster orange
+  const trekTier = isCluster ? null : (d.tier ?? null);
+  const pinColor = isCluster
+    ? "#f59e0b"
+    : trekTier === 1 ? "#f59e0b"   // gold   — Tier 1 iconic
+    : trekTier === 2 ? "#3b82f6"   // blue   — Tier 2 legendary
+    : trekTier === 3 ? "#64748b"   // slate  — Tier 3 remote/specialist
+    : trekTier === 4 ? "#8b5cf6"   // purple — Tier 4 thru-hike
+    : "#3b82f6";                   // fallback
   const selectedRing = isSelected
     ? `box-shadow: 0 0 0 3px #fff, 0 0 0 5px ${pinColor}, 0 0 16px ${pinColor}88;`
     : `box-shadow: 0 0 10px ${pinColor}66;`;
@@ -315,7 +324,7 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
       else if (!isEmbed && continent && continent !== "ALL" && trek.region !== continent) return false;
       if (f?.accommodation?.length && !f.accommodation.includes(getAccommodationCategory(trek.accommodation))) return false;
       if (f?.terrain?.length     && !f.terrain.includes(getTerrainCategory(trek.terrain))) return false;
-      if (f?.duration?.length    && !f.duration.includes(getDurationBucket(trek.totalDays))) return false;
+      if (f?.duration?.length    && !f.duration.includes(getDurationBucket(trek.totalDays, trek.tier))) return false;
       if (f?.popularity?.length  && !f.popularity.includes(getPopularityBucket(trek.popularityScore))) return false;
       return true;
     });
