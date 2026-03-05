@@ -2,8 +2,8 @@ import { create } from "zustand";
 
 export type Continent = "Africa" | "Asia" | "Europe" | "North America" | "South America" | "Oceania";
 export type Accommodation = "Camping" | "Teahouses" | "Huts" | "Hotels" | "Various";
-export type LengthBucket = "Short" | "Medium" | "Long";
-export type TrekTier = "Tier 1" | "Tier 2" | "Tier 3";
+export type LengthBucket = "Short" | "Medium" | "Long" | "Epic" | "Thru";
+export type TrekTier = "Tier 1" | "Tier 2" | "Tier 3" | "Tier 4";
 
 interface FilterState {
   continent: "ALL" | Continent;
