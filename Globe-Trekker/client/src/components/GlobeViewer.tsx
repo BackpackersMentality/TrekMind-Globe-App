@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import { getAllStoredStatuses } from "@/hooks/useTrekList";
 import Globe from "react-globe.gl";
 import type { GlobeMethods } from "react-globe.gl";
 import { TREKS } from "../data/treks";
@@ -52,13 +53,21 @@ function makePin(d: any, selectedTrekId: string | null, fireSelection: (d: any) 
 
   // Tier-coloured pins: T1 gold · T2 blue · T3 slate · T4 Thru purple · cluster orange
   const trekTier = isCluster ? null : (d.tier ?? null);
-  const pinColor = isCluster
+  // Base tier colour
+  const tierColor = isCluster
     ? "#f59e0b"
     : trekTier === 1 ? "#f59e0b"   // gold   — Tier 1 iconic
     : trekTier === 2 ? "#3b82f6"   // blue   — Tier 2 legendary
     : trekTier === 3 ? "#64748b"   // slate  — Tier 3 remote/specialist
     : trekTier === 4 ? "#8b5cf6"   // purple — Tier 4 thru-hike
     : "#3b82f6";                   // fallback
+
+  // Status override — completed/wishlist/inProgress beats tier colour
+  const trekStatus = (!isCluster && trekId) ? getAllStoredStatuses()[trekId] : null;
+  const pinColor = trekStatus === "completed"  ? "#f59e0b"   // amber  — done ✓
+                 : trekStatus === "inProgress" ? "#38bdf8"   // ice blue — active
+                 : trekStatus === "wishlist"   ? "#a78bfa"   // violet — dreaming
+                 : tierColor;
   const selectedRing = isSelected
     ? `box-shadow: 0 0 0 3px #fff, 0 0 0 5px ${pinColor}, 0 0 16px ${pinColor}88;`
     : `box-shadow: 0 0 10px ${pinColor}66;`;
