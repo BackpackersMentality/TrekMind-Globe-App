@@ -36,18 +36,26 @@ export function clusterTreks(treks: any[], thresholdKm: number): any[] {
       const other = treks[j];
       if (processed.has(String(other.id))) continue;
 
-      const distance = getDistance(trek.latitude, trek.longitude, other.latitude, other.longitude);
-      if (distance <= thresholdKm) {
+      // Candidate must be within thresholdKm of EVERY existing cluster member,
+      // not just the seed — prevents geographically stretched clusters.
+      const fitsCluster = nearby.every(member =>
+        getDistance(member.latitude, member.longitude, other.latitude, other.longitude) <= thresholdKm
+      );
+
+      if (fitsCluster) {
         nearby.push(other);
         processed.add(String(other.id));
       }
     }
 
     if (nearby.length > 1) {
+      // Place cluster marker at the geographic centroid of its members
+      const centroidLat = nearby.reduce((sum, t) => sum + t.latitude,  0) / nearby.length;
+      const centroidLon = nearby.reduce((sum, t) => sum + t.longitude, 0) / nearby.length;
       clusters.push({
         id: `cluster-${trek.id}`,
-        latitude: trek.latitude,
-        longitude: trek.longitude,
+        latitude: centroidLat,
+        longitude: centroidLon,
         treks: nearby,
         isCluster: true
       });
