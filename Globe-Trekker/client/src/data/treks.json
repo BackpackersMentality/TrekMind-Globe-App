@@ -1919,7 +1919,7 @@
     "longitude": -72.9818,
     "imageFilename": "w_trek",
     "season": "Oct–Apr",
-    "popularityScore": 92
+    "popularityScore": 9
   },
   {
     "id": "via-alpina",
@@ -1941,7 +1941,7 @@
     "longitude": 13.777,
     "imageFilename": "via-alpina",
     "season": "Jun–Sep",
-    "popularityScore": 68
+    "popularityScore": 7
   },
   {
     "id": "gr11",
@@ -1963,7 +1963,7 @@
     "longitude": -1.792,
     "imageFilename": "gr11",
     "season": "Jun–Sep",
-    "popularityScore": 72
+    "popularityScore": 7
   },
   {
     "id": "gr10",
@@ -1985,7 +1985,7 @@
     "longitude": -1.774,
     "imageFilename": "gr10",
     "season": "Jun–Oct",
-    "popularityScore": 74
+    "popularityScore": 7
   },
   {
     "id": "wicklow",
@@ -2007,7 +2007,7 @@
     "longitude": -6.271,
     "imageFilename": "wicklow",
     "season": "Mar–Oct",
-    "popularityScore": 70
+    "popularityScore": 7
   },
   {
     "id": "pennine",
@@ -2029,7 +2029,7 @@
     "longitude": -1.815,
     "imageFilename": "pennine",
     "season": "May–Sep",
-    "popularityScore": 73
+    "popularityScore": 7
   },
   {
     "id": "adlerweg",
@@ -2051,7 +2051,7 @@
     "longitude": 12.43,
     "imageFilename": "adlerweg",
     "season": "Jun–Sep",
-    "popularityScore": 69
+    "popularityScore": 7
   },
   {
     "id": "via-dinarica",
@@ -2073,7 +2073,7 @@
     "longitude": 14.219,
     "imageFilename": "via-dinarica",
     "season": "Jun–Oct",
-    "popularityScore": 65
+    "popularityScore": 6
   },
   {
     "id": "abel-tasman",
@@ -2095,7 +2095,7 @@
     "longitude": 172.958,
     "imageFilename": "abel-tasman",
     "season": "Year-round",
-    "popularityScore": 85
+    "popularityScore": 8
   },
   {
     "id": "great-ocean-walk",
@@ -2117,7 +2117,7 @@
     "longitude": 143.667,
     "imageFilename": "great-ocean-walk",
     "season": "Sep–May",
-    "popularityScore": 76
+    "popularityScore": 8
   },
   {
     "id": "langtang",
@@ -2139,7 +2139,7 @@
     "longitude": 85.332,
     "imageFilename": "langtang",
     "season": "Mar–May, Sep–Nov",
-    "popularityScore": 78
+    "popularityScore": 8
   },
   {
     "id": "three-passes-trek",
@@ -2161,7 +2161,7 @@
     "longitude": 86.73,
     "imageFilename": "three-passes-trek",
     "season": "Mar–May, Sep–Nov",
-    "popularityScore": 80
+    "popularityScore": 8
   },
   {
     "id": "bibbulmun",
@@ -2183,7 +2183,7 @@
     "longitude": 116.058,
     "imageFilename": "bibbulmun",
     "season": "Apr–Nov",
-    "popularityScore": 66
+    "popularityScore": 7
   },
   {
     "id": "fann",
@@ -2205,7 +2205,7 @@
     "longitude": 68.14,
     "imageFilename": "fann",
     "season": "Jun–Sep",
-    "popularityScore": 64
+    "popularityScore": 6
   },
   {
     "id": "long-trail",
@@ -2227,7 +2227,7 @@
     "longitude": -73.112,
     "imageFilename": "long-trail",
     "season": "Jun–Oct",
-    "popularityScore": 68
+    "popularityScore": 7
   },
   {
     "id": "colorado",
@@ -2249,7 +2249,7 @@
     "longitude": -105.093,
     "imageFilename": "colorado",
     "season": "Jul–Sep",
-    "popularityScore": 74
+    "popularityScore": 7
   },
   {
     "id": "mount-kinabalu",
@@ -2271,7 +2271,7 @@
     "longitude": 116.544,
     "imageFilename": "mount-kinabalu",
     "season": "Feb–Apr, Aug",
-    "popularityScore": 82
+    "popularityScore": 8
   },
   {
     "id": "mount-semeru",
@@ -2293,7 +2293,7 @@
     "longitude": 112.951,
     "imageFilename": "mount-semeru",
     "season": "Apr–Nov",
-    "popularityScore": 72
+    "popularityScore": 7
   },
   {
     "id": "zion-traverse",
@@ -2315,7 +2315,7 @@
     "longitude": -113.193,
     "imageFilename": "zion-traverse",
     "season": "Mar–May, Sep–Nov",
-    "popularityScore": 78
+    "popularityScore": 8
   },
   {
     "id": "gdt",
@@ -2337,7 +2337,7 @@
     "longitude": -113.91,
     "imageFilename": "gdt",
     "season": "Jul–Sep",
-    "popularityScore": 63
+    "popularityScore": 6
   },
   {
     "id": "tre_cime",
@@ -2359,7 +2359,7 @@
     "longitude": 12.299,
     "imageFilename": "tre_cime",
     "season": "Jun–Sep",
-    "popularityScore": 86
+    "popularityScore": 9
   },
   {
     "id": "st-olavs",
@@ -2381,7 +2381,7 @@
     "longitude": 10.752,
     "imageFilename": "st-olavs",
     "season": "Jun–Aug",
-    "popularityScore": 65
+    "popularityScore": 6
   },
   {
     "id": "lofoten",
@@ -2403,7 +2403,7 @@
     "longitude": 14.81,
     "imageFilename": "lofoten",
     "season": "Jul–Aug",
-    "popularityScore": 74
+    "popularityScore": 7
   },
   {
     "id": "akshayuk",
@@ -2418,14 +2418,14 @@
     "distanceKm": 97,
     "totalDays": "8–10 Days",
     "durationDays": 9,
-    "maxAltitude": "500 m",
-    "maxAltitudeM": 500,
+    "maxAltitude": "480 m",
+    "maxAltitudeM": 480,
     "permits": "Required",
     "latitude": 66.144,
     "longitude": -65.713,
     "imageFilename": "akshayuk",
     "season": "Jul–Aug",
-    "popularityScore": 62
+    "popularityScore": 6
   },
   {
     "id": "kashmir",
@@ -2447,7 +2447,7 @@
     "longitude": 75.297,
     "imageFilename": "kashmir",
     "season": "Jul–Sep",
-    "popularityScore": 76
+    "popularityScore": 8
   },
   {
     "id": "kerry",
@@ -2469,7 +2469,7 @@
     "longitude": -9.507,
     "imageFilename": "kerry",
     "season": "Apr–Oct",
-    "popularityScore": 71
+    "popularityScore": 7
   },
   {
     "id": "shikoku",
@@ -2491,7 +2491,7 @@
     "longitude": 134.503,
     "imageFilename": "shikoku",
     "season": "Mar–May, Oct–Nov",
-    "popularityScore": 70
+    "popularityScore": 7
   },
   {
     "id": "kokoda",
@@ -2513,7 +2513,7 @@
     "longitude": 147.488,
     "imageFilename": "kokoda",
     "season": "May–Oct",
-    "popularityScore": 72
+    "popularityScore": 7
   },
   {
     "id": "otter",
@@ -2535,7 +2535,7 @@
     "longitude": 23.882,
     "imageFilename": "otter",
     "season": "Oct–Apr",
-    "popularityScore": 74
+    "popularityScore": 7
   },
   {
     "id": "druk",
@@ -2557,7 +2557,7 @@
     "longitude": 89.426,
     "imageFilename": "druk",
     "season": "Mar–Jun, Sep–Nov",
-    "popularityScore": 73
+    "popularityScore": 7
   },
   {
     "id": "great-glen",
@@ -2579,7 +2579,7 @@
     "longitude": -5.111,
     "imageFilename": "great-glen",
     "season": "Apr–Oct",
-    "popularityScore": 72
+    "popularityScore": 7
   },
   {
     "id": "tahoe-rim",
@@ -2601,7 +2601,7 @@
     "longitude": -120.142,
     "imageFilename": "tahoe-rim",
     "season": "Jul–Sep",
-    "popularityScore": 74
+    "popularityScore": 7
   },
   {
     "id": "kilimanjaro-lemosho",
@@ -2623,7 +2623,7 @@
     "longitude": 37.115,
     "imageFilename": "kilimanjaro-lemosho",
     "season": "Jan–Mar, Jun–Oct",
-    "popularityScore": 84
+    "popularityScore": 8
   },
   {
     "id": "australian-alps",
@@ -2645,7 +2645,7 @@
     "longitude": 146.452,
     "imageFilename": "australian-alps",
     "season": "Nov–Apr",
-    "popularityScore": 62
+    "popularityScore": 6
   },
   {
     "id": "heaphy",
@@ -2667,6 +2667,6 @@
     "longitude": 172.435,
     "imageFilename": "heaphy",
     "season": "Year-round",
-    "popularityScore": 76
+    "popularityScore": 8
   }
 ]
