@@ -16,7 +16,13 @@
     "longitude": 12.08,
     "imageFilename": "av1",
     "season": "June-September",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "haute_route",
@@ -35,7 +41,13 @@
     "longitude": 7.74,
     "imageFilename": "haute_route",
     "season": "June-September",
-    "popularityScore": 10
+    "popularityScore": 10,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "abc",
@@ -54,7 +66,15 @@
     "longitude": 83.87,
     "imageFilename": "abc",
     "season": "March-May & September-November",
-    "popularityScore": 10
+    "popularityScore": 10,
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ]
   },
   {
     "id": "annapurna",
@@ -73,7 +93,15 @@
     "longitude": 83.92,
     "imageFilename": "annapurna",
     "season": "March-May & September-November",
-    "popularityScore": 9
+    "popularityScore": 9,
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ]
   },
   {
     "id": "camino",
@@ -92,7 +120,16 @@
     "longitude": -5.57,
     "imageFilename": "camino",
     "season": "April-October",
-    "popularityScore": 10
+    "popularityScore": 10,
+    "seasonMonths": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "drakensberg",
@@ -111,7 +148,21 @@
     "longitude": 28.91,
     "imageFilename": "drakensberg",
     "season": "Year-round",
-    "popularityScore": 1
+    "popularityScore": 1,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "ebc",
@@ -130,7 +181,15 @@
     "longitude": 86.92,
     "imageFilename": "ebc",
     "season": "March-May & September-November",
-    "popularityScore": 10
+    "popularityScore": 10,
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ]
   },
   {
     "id": "gr20",
@@ -149,7 +208,13 @@
     "longitude": 9.12,
     "imageFilename": "gr20",
     "season": "June-September",
-    "popularityScore": 9
+    "popularityScore": 9,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "huayhuash",
@@ -168,7 +233,14 @@
     "longitude": -76.92,
     "imageFilename": "huayhuash",
     "season": "May-September",
-    "popularityScore": 4
+    "popularityScore": 4,
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "inca",
@@ -187,7 +259,14 @@
     "longitude": -72.49,
     "imageFilename": "inca",
     "season": "May-September",
-    "popularityScore": 9
+    "popularityScore": 9,
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "jmt",
@@ -206,7 +285,12 @@
     "longitude": -119.59,
     "imageFilename": "jmt",
     "season": "July-September",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "kbc",
@@ -225,7 +309,12 @@
     "longitude": 76.22,
     "imageFilename": "kbc",
     "season": "June-August",
-    "popularityScore": 9
+    "popularityScore": 9,
+    "seasonMonths": [
+      6,
+      7,
+      8
+    ]
   },
   {
     "id": "kilimanjaro",
@@ -244,7 +333,16 @@
     "longitude": 37.35,
     "imageFilename": "kilimanjaro",
     "season": "January-February & June-October",
-    "popularityScore": 10
+    "popularityScore": 10,
+    "seasonMonths": [
+      1,
+      2,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "kungsleden",
@@ -263,7 +361,12 @@
     "longitude": 18.5,
     "imageFilename": "kungsleden",
     "season": "July-September",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "laugavegur",
@@ -282,7 +385,11 @@
     "longitude": -19.06,
     "imageFilename": "laugavegur",
     "season": "July-August",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      7,
+      8
+    ]
   },
   {
     "id": "milford",
@@ -301,7 +408,16 @@
     "longitude": 167.73,
     "imageFilename": "milford",
     "season": "October-April",
-    "popularityScore": 9
+    "popularityScore": 9,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "fuji",
@@ -320,7 +436,12 @@
     "longitude": 138.73,
     "imageFilename": "fuji",
     "season": "July-early September",
-    "popularityScore": 10
+    "popularityScore": 10,
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "kailash",
@@ -339,7 +460,15 @@
     "longitude": 81.31,
     "imageFilename": "kailash",
     "season": "May-October",
-    "popularityScore": 5
+    "popularityScore": 5,
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "overland",
@@ -358,7 +487,17 @@
     "longitude": 145.95,
     "imageFilename": "overland",
     "season": "October-May",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "routeburn",
@@ -377,7 +516,16 @@
     "longitude": 168.17,
     "imageFilename": "routeburn",
     "season": "October-April",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "snowman",
@@ -396,7 +544,11 @@
     "longitude": 90.3,
     "imageFilename": "snowman",
     "season": "September-October",
-    "popularityScore": 1
+    "popularityScore": 1,
+    "seasonMonths": [
+      9,
+      10
+    ]
   },
   {
     "id": "torres",
@@ -415,7 +567,14 @@
     "longitude": -72.96,
     "imageFilename": "torres",
     "season": "November-March",
-    "popularityScore": 9
+    "popularityScore": 9,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      11,
+      12
+    ]
   },
   {
     "id": "tmb",
@@ -434,7 +593,13 @@
     "longitude": 6.86,
     "imageFilename": "tmb",
     "season": "June-September",
-    "popularityScore": 10
+    "popularityScore": 10,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "west_coast",
@@ -453,7 +618,14 @@
     "longitude": -124.83,
     "imageFilename": "west_coast",
     "season": "May-September",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "av2",
@@ -472,7 +644,13 @@
     "longitude": 11.85,
     "imageFilename": "av2",
     "season": "June-September",
-    "popularityScore": 4
+    "popularityScore": 4,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "av4",
@@ -491,7 +669,13 @@
     "longitude": 12.13,
     "imageFilename": "av4",
     "season": "June-September",
-    "popularityScore": 2
+    "popularityScore": 2,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "arctic",
@@ -510,7 +694,14 @@
     "longitude": -53.67,
     "imageFilename": "arctic",
     "season": "June-October",
-    "popularityScore": 3
+    "popularityScore": 3,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "ausangate",
@@ -529,7 +720,14 @@
     "longitude": -71.22,
     "imageFilename": "ausangate",
     "season": "May-September",
-    "popularityScore": 5
+    "popularityScore": 5,
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "banff",
@@ -548,7 +746,14 @@
     "longitude": -115.57,
     "imageFilename": "banff",
     "season": "June-October",
-    "popularityScore": 3
+    "popularityScore": 3,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "c2c",
@@ -567,7 +772,13 @@
     "longitude": -3.59,
     "imageFilename": "c2c",
     "season": "June-September",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "east_coast",
@@ -586,7 +797,14 @@
     "longitude": -52.71,
     "imageFilename": "east_coast",
     "season": "June-October",
-    "popularityScore": 3
+    "popularityScore": 3,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "fishermans",
@@ -605,7 +823,13 @@
     "longitude": -8.78,
     "imageFilename": "fishermans",
     "season": "June-September",
-    "popularityScore": 5
+    "popularityScore": 5,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "fitz_roy",
@@ -624,7 +848,14 @@
     "longitude": -72.88,
     "imageFilename": "fitz_roy",
     "season": "November-March",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      11,
+      12
+    ]
   },
   {
     "id": "gokyo",
@@ -643,7 +874,13 @@
     "longitude": 86.69,
     "imageFilename": "gokyo",
     "season": "June-September",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "whw",
@@ -662,7 +899,14 @@
     "longitude": -4.71,
     "imageFilename": "whw",
     "season": "May-September",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "jordan",
@@ -681,7 +925,21 @@
     "longitude": 35.6,
     "imageFilename": "jordan",
     "season": "Year-round",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "kalalau",
@@ -700,7 +958,14 @@
     "longitude": -159.6,
     "imageFilename": "kalalau",
     "season": "June-October",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "kumano",
@@ -719,7 +984,21 @@
     "longitude": 135.77,
     "imageFilename": "kumano",
     "season": "Year-round",
-    "popularityScore": 5
+    "popularityScore": 5,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "larapinta",
@@ -738,7 +1017,15 @@
     "longitude": 133.88,
     "imageFilename": "larapinta",
     "season": "November-April",
-    "popularityScore": 5
+    "popularityScore": 5,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      11,
+      12
+    ]
   },
   {
     "id": "lycian",
@@ -757,7 +1044,16 @@
     "longitude": 29.12,
     "imageFilename": "lycian",
     "season": "April-October",
-    "popularityScore": 5
+    "popularityScore": 5,
+    "seasonMonths": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "manaslu",
@@ -776,7 +1072,15 @@
     "longitude": 84.62,
     "imageFilename": "manaslu",
     "season": "March-May & September-November",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ]
   },
   {
     "id": "markha",
@@ -795,7 +1099,15 @@
     "longitude": 77.25,
     "imageFilename": "markha",
     "season": "March-May & September-November",
-    "popularityScore": 4
+    "popularityScore": 4,
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ]
   },
   {
     "id": "kenya",
@@ -814,7 +1126,21 @@
     "longitude": 37.3,
     "imageFilename": "kenya",
     "season": "Year-round",
-    "popularityScore": 4
+    "popularityScore": 4,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "balkans",
@@ -833,7 +1159,13 @@
     "longitude": 19.77,
     "imageFilename": "balkans",
     "season": "June-September",
-    "popularityScore": 4
+    "popularityScore": 4,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "salkantay",
@@ -852,7 +1184,14 @@
     "longitude": -72.58,
     "imageFilename": "salkantay",
     "season": "May-September",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "simien",
@@ -871,7 +1210,21 @@
     "longitude": 38.25,
     "imageFilename": "simien",
     "season": "Year-round",
-    "popularityScore": 4
+    "popularityScore": 4,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "tiger_leaping",
@@ -890,7 +1243,13 @@
     "longitude": 100.12,
     "imageFilename": "tiger_leaping",
     "season": "April-May & September-October",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      4,
+      5,
+      9,
+      10
+    ]
   },
   {
     "id": "tongariro",
@@ -909,7 +1268,15 @@
     "longitude": 175.64,
     "imageFilename": "tongariro",
     "season": "November-April",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      11,
+      12
+    ]
   },
   {
     "id": "triglav",
@@ -928,7 +1295,13 @@
     "longitude": 13.83,
     "imageFilename": "triglav",
     "season": "June-September",
-    "popularityScore": 4
+    "popularityScore": 4,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "wonderland",
@@ -947,7 +1320,14 @@
     "longitude": -121.76,
     "imageFilename": "wonderland",
     "season": "June-October",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "acatenango",
@@ -966,7 +1346,21 @@
     "longitude": -90.87,
     "imageFilename": "acatenango",
     "season": "Year-round",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "ala-kul",
@@ -985,7 +1379,12 @@
     "longitude": 78.5,
     "imageFilename": "ala-kul",
     "season": "July-September",
-    "popularityScore": 4
+    "popularityScore": 4,
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "altai",
@@ -1004,7 +1403,21 @@
     "longitude": 86.58,
     "imageFilename": "altai",
     "season": "Year-round",
-    "popularityScore": 1
+    "popularityScore": 1,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "tusheti",
@@ -1023,7 +1436,21 @@
     "longitude": 45.38,
     "imageFilename": "tusheti",
     "season": "Year-round",
-    "popularityScore": 2
+    "popularityScore": 2,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "cordillera",
@@ -1042,7 +1469,14 @@
     "longitude": -68.33,
     "imageFilename": "cordillera",
     "season": "May-September",
-    "popularityScore": 4
+    "popularityScore": 4,
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "el_choro",
@@ -1061,7 +1495,14 @@
     "longitude": -68.04,
     "imageFilename": "el_choro",
     "season": "May-September",
-    "popularityScore": 3
+    "popularityScore": 3,
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "fish_river",
@@ -1080,7 +1521,21 @@
     "longitude": 17.58,
     "imageFilename": "fish_river",
     "season": "Year-round",
-    "popularityScore": 1
+    "popularityScore": 1,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "huemel",
@@ -1099,7 +1554,14 @@
     "longitude": -72.88,
     "imageFilename": "huemel",
     "season": "May-September",
-    "popularityScore": 2
+    "popularityScore": 2,
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "lost_city",
@@ -1118,7 +1580,14 @@
     "longitude": -73.92,
     "imageFilename": "lost_city",
     "season": "May-September",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "ushguli",
@@ -1137,7 +1606,21 @@
     "longitude": 42.72,
     "imageFilename": "ushguli",
     "season": "Year-round",
-    "popularityScore": 4
+    "popularityScore": 4,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "mgoun",
@@ -1156,7 +1639,21 @@
     "longitude": -6.44,
     "imageFilename": "mgoun",
     "season": "Year-round",
-    "popularityScore": 2
+    "popularityScore": 2,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "rinjani",
@@ -1175,7 +1672,21 @@
     "longitude": 116.45,
     "imageFilename": "rinjani",
     "season": "Year-round",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "rwenzori",
@@ -1194,7 +1705,21 @@
     "longitude": 29.87,
     "imageFilename": "rwenzori",
     "season": "Year-round",
-    "popularityScore": 1
+    "popularityScore": 1,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "santa_cruz",
@@ -1213,7 +1738,14 @@
     "longitude": -77.63,
     "imageFilename": "santa_cruz",
     "season": "May-September",
-    "popularityScore": 5
+    "popularityScore": 5,
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "timberline",
@@ -1232,7 +1764,14 @@
     "longitude": -121.69,
     "imageFilename": "timberline",
     "season": "June-October",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "toublak",
@@ -1251,7 +1790,21 @@
     "longitude": -7.92,
     "imageFilename": "toublak",
     "season": "Year-round",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "yading_kora",
@@ -1270,7 +1823,21 @@
     "longitude": 100.33,
     "imageFilename": "yading_kora",
     "season": "Year-round",
-    "popularityScore": 2
+    "popularityScore": 2,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "teton_crest",
@@ -1289,7 +1856,12 @@
     "longitude": -110.8,
     "imageFilename": "teton_crest",
     "season": "July-September",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "wind_river",
@@ -1308,7 +1880,12 @@
     "longitude": -109.55,
     "imageFilename": "wind_river",
     "season": "July-September",
-    "popularityScore": 4
+    "popularityScore": 4,
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "sierra_high",
@@ -1327,7 +1904,12 @@
     "longitude": -118.6,
     "imageFilename": "sierra_high",
     "season": "July-September",
-    "popularityScore": 3
+    "popularityScore": 3,
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "tombstone",
@@ -1346,7 +1928,12 @@
     "longitude": -138.3,
     "imageFilename": "tombstone",
     "season": "July-September",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "skyline",
@@ -1365,7 +1952,12 @@
     "longitude": -117.92,
     "imageFilename": "skyline",
     "season": "July-September",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "rockwall",
@@ -1384,7 +1976,12 @@
     "longitude": -116.02,
     "imageFilename": "rockwall",
     "season": "July-September",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "choquequirao",
@@ -1403,7 +2000,14 @@
     "longitude": -72.85,
     "imageFilename": "choquequirao",
     "season": "May-September",
-    "popularityScore": 5
+    "popularityScore": 5,
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "quilotoa",
@@ -1422,7 +2026,13 @@
     "longitude": -78.9,
     "imageFilename": "quilotoa",
     "season": "June-September",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "roraima",
@@ -1441,7 +2051,14 @@
     "longitude": -60.76,
     "imageFilename": "roraima",
     "season": "December-April",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      12
+    ]
   },
   {
     "id": "dientes",
@@ -1460,7 +2077,13 @@
     "longitude": -67.67,
     "imageFilename": "dientes",
     "season": "December-March",
-    "popularityScore": 3
+    "popularityScore": 3,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      12
+    ]
   },
   {
     "id": "cerro_castillo",
@@ -1479,7 +2102,14 @@
     "longitude": -72.18,
     "imageFilename": "cerro_castillo",
     "season": "November-March",
-    "popularityScore": 5
+    "popularityScore": 5,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      11,
+      12
+    ]
   },
   {
     "id": "cape_wrath",
@@ -1498,7 +2128,14 @@
     "longitude": -4.99,
     "imageFilename": "cape_wrath",
     "season": "May-September",
-    "popularityScore": 5
+    "popularityScore": 5,
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "monte_rosa",
@@ -1517,7 +2154,12 @@
     "longitude": 7.87,
     "imageFilename": "monte_rosa",
     "season": "July-September",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "stubai",
@@ -1536,7 +2178,12 @@
     "longitude": 11.12,
     "imageFilename": "stubai",
     "season": "July-September",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "berliner",
@@ -1555,7 +2202,12 @@
     "longitude": 11.87,
     "imageFilename": "berliner",
     "season": "July-September",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "hornstrandir",
@@ -1574,7 +2226,12 @@
     "longitude": -22.4,
     "imageFilename": "hornstrandir",
     "season": "June-August",
-    "popularityScore": 4
+    "popularityScore": 4,
+    "seasonMonths": [
+      6,
+      7,
+      8
+    ]
   },
   {
     "id": "kanchenjunga",
@@ -1593,7 +2250,14 @@
     "longitude": 88.15,
     "imageFilename": "kanchenjunga",
     "season": "March-May & October-November",
-    "popularityScore": 5
+    "popularityScore": 5,
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ]
   },
   {
     "id": "upper_mustang",
@@ -1612,7 +2276,18 @@
     "longitude": 83.97,
     "imageFilename": "upper_mustang",
     "season": "March-November",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ]
   },
   {
     "id": "makalu_bc",
@@ -1631,7 +2306,14 @@
     "longitude": 87.09,
     "imageFilename": "makalu_bc",
     "season": "March-May & October-November",
-    "popularityScore": 4
+    "popularityScore": 4,
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ]
   },
   {
     "id": "dhaulagiri",
@@ -1650,7 +2332,11 @@
     "longitude": 83.49,
     "imageFilename": "dhaulagiri",
     "season": "October-November",
-    "popularityScore": 4
+    "popularityScore": 4,
+    "seasonMonths": [
+      10,
+      11
+    ]
   },
   {
     "id": "chadar",
@@ -1669,7 +2355,11 @@
     "longitude": 76.77,
     "imageFilename": "chadar",
     "season": "January-February",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      1,
+      2
+    ]
   },
   {
     "id": "maclehose",
@@ -1688,7 +2378,16 @@
     "longitude": 114.18,
     "imageFilename": "maclehose",
     "season": "October-April",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "mount_meru",
@@ -1707,7 +2406,18 @@
     "longitude": 36.75,
     "imageFilename": "mount_meru",
     "season": "June-February",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      1,
+      2,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "berg_lake",
@@ -1726,7 +2436,12 @@
     "longitude": -119.16,
     "imageFilename": "berg_lake",
     "season": "July-September",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "kepler",
@@ -1745,7 +2460,16 @@
     "longitude": 167.72,
     "imageFilename": "kepler",
     "season": "October-April",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "dusky",
@@ -1764,7 +2488,13 @@
     "longitude": 167.05,
     "imageFilename": "dusky",
     "season": "December-March",
-    "popularityScore": 3
+    "popularityScore": 3,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      12
+    ]
   },
   {
     "id": "appalachian",
@@ -1783,7 +2513,17 @@
     "longitude": -71.3,
     "imageFilename": "appalachian",
     "season": "March-October (NOBO thru)",
-    "popularityScore": 10
+    "popularityScore": 10,
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "pct",
@@ -1802,7 +2542,16 @@
     "longitude": -120.65,
     "imageFilename": "pct",
     "season": "April-October (NOBO thru)",
-    "popularityScore": 10
+    "popularityScore": 10,
+    "seasonMonths": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "cdt",
@@ -1821,7 +2570,16 @@
     "longitude": -113.0,
     "imageFilename": "cdt",
     "season": "April-October (NOBO thru)",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "te_araroa",
@@ -1840,7 +2598,16 @@
     "longitude": 175.8,
     "imageFilename": "te_araroa",
     "season": "October-April (SoBo thru)",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "ght",
@@ -1859,7 +2626,13 @@
     "longitude": 84.5,
     "imageFilename": "ght",
     "season": "October-November & April-May",
-    "popularityScore": 5
+    "popularityScore": 5,
+    "seasonMonths": [
+      4,
+      5,
+      10,
+      11
+    ]
   },
   {
     "id": "israel_trail",
@@ -1878,7 +2651,16 @@
     "longitude": 34.98,
     "imageFilename": "israel_trail",
     "season": "October-April",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "camino_primitivo",
@@ -1897,7 +2679,16 @@
     "longitude": -6.18,
     "imageFilename": "camino_primitivo",
     "season": "April-October",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "w_trek",
@@ -1919,7 +2710,16 @@
     "longitude": -72.9818,
     "imageFilename": "w_trek",
     "season": "Oct\u2013Apr",
-    "popularityScore": 9
+    "popularityScore": 9,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "via-alpina",
@@ -1941,7 +2741,13 @@
     "longitude": 13.777,
     "imageFilename": "via-alpina",
     "season": "Jun\u2013Sep",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "gr11",
@@ -1963,7 +2769,13 @@
     "longitude": -1.792,
     "imageFilename": "gr11",
     "season": "Jun\u2013Sep",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "gr10",
@@ -1985,7 +2797,14 @@
     "longitude": -1.774,
     "imageFilename": "gr10",
     "season": "Jun\u2013Oct",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "wicklow",
@@ -2007,7 +2826,17 @@
     "longitude": -6.271,
     "imageFilename": "wicklow",
     "season": "Mar\u2013Oct",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "pennine",
@@ -2029,7 +2858,14 @@
     "longitude": -1.815,
     "imageFilename": "pennine",
     "season": "May\u2013Sep",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "adlerweg",
@@ -2051,7 +2887,13 @@
     "longitude": 12.43,
     "imageFilename": "adlerweg",
     "season": "Jun\u2013Sep",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "via-dinarica",
@@ -2073,7 +2915,14 @@
     "longitude": 14.219,
     "imageFilename": "via-dinarica",
     "season": "Jun\u2013Oct",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "abel-tasman",
@@ -2095,7 +2944,21 @@
     "longitude": 172.958,
     "imageFilename": "abel-tasman",
     "season": "Year-round",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "great-ocean-walk",
@@ -2117,7 +2980,18 @@
     "longitude": 143.667,
     "imageFilename": "great-ocean-walk",
     "season": "Sep\u2013May",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "langtang",
@@ -2139,7 +3013,15 @@
     "longitude": 85.332,
     "imageFilename": "langtang",
     "season": "Mar\u2013May, Sep\u2013Nov",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ]
   },
   {
     "id": "three-passes-trek",
@@ -2161,7 +3043,15 @@
     "longitude": 86.73,
     "imageFilename": "three-passes-trek",
     "season": "Mar\u2013May, Sep\u2013Nov",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ]
   },
   {
     "id": "bibbulmun",
@@ -2183,7 +3073,17 @@
     "longitude": 116.058,
     "imageFilename": "bibbulmun",
     "season": "Apr\u2013Nov",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ]
   },
   {
     "id": "fann",
@@ -2205,7 +3105,13 @@
     "longitude": 68.14,
     "imageFilename": "fann",
     "season": "Jun\u2013Sep",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "long-trail",
@@ -2227,7 +3133,14 @@
     "longitude": -73.112,
     "imageFilename": "long-trail",
     "season": "Jun\u2013Oct",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "colorado",
@@ -2249,7 +3162,12 @@
     "longitude": -105.093,
     "imageFilename": "colorado",
     "season": "Jul\u2013Sep",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "mount-kinabalu",
@@ -2271,7 +3189,13 @@
     "longitude": 116.544,
     "imageFilename": "mount-kinabalu",
     "season": "Feb\u2013Apr, Aug",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      2,
+      3,
+      4,
+      8
+    ]
   },
   {
     "id": "mount-semeru",
@@ -2293,7 +3217,17 @@
     "longitude": 112.951,
     "imageFilename": "mount-semeru",
     "season": "Apr\u2013Nov",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ]
   },
   {
     "id": "zion-traverse",
@@ -2315,7 +3249,15 @@
     "longitude": -113.193,
     "imageFilename": "zion-traverse",
     "season": "Mar\u2013May, Sep\u2013Nov",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ]
   },
   {
     "id": "gdt",
@@ -2337,7 +3279,12 @@
     "longitude": -113.91,
     "imageFilename": "gdt",
     "season": "Jul\u2013Sep",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "tre_cime",
@@ -2359,7 +3306,13 @@
     "longitude": 12.299,
     "imageFilename": "tre_cime",
     "season": "Jun\u2013Sep",
-    "popularityScore": 9
+    "popularityScore": 9,
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "st-olavs",
@@ -2381,7 +3334,12 @@
     "longitude": 10.752,
     "imageFilename": "st-olavs",
     "season": "Jun\u2013Aug",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      6,
+      7,
+      8
+    ]
   },
   {
     "id": "lofoten",
@@ -2403,7 +3361,11 @@
     "longitude": 14.81,
     "imageFilename": "lofoten",
     "season": "Jul\u2013Aug",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      7,
+      8
+    ]
   },
   {
     "id": "akshayuk",
@@ -2425,7 +3387,11 @@
     "longitude": -65.713,
     "imageFilename": "akshayuk",
     "season": "Jul\u2013Aug",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      7,
+      8
+    ]
   },
   {
     "id": "kashmir",
@@ -2447,7 +3413,12 @@
     "longitude": 75.297,
     "imageFilename": "kashmir",
     "season": "Jul\u2013Sep",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "kerry",
@@ -2469,7 +3440,16 @@
     "longitude": -9.507,
     "imageFilename": "kerry",
     "season": "Apr\u2013Oct",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "shikoku",
@@ -2491,7 +3471,14 @@
     "longitude": 134.503,
     "imageFilename": "shikoku",
     "season": "Mar\u2013May, Oct\u2013Nov",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ]
   },
   {
     "id": "kokoda",
@@ -2513,7 +3500,15 @@
     "longitude": 147.488,
     "imageFilename": "kokoda",
     "season": "May\u2013Oct",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "otter",
@@ -2535,7 +3530,16 @@
     "longitude": 23.882,
     "imageFilename": "otter",
     "season": "Oct\u2013Apr",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "druk",
@@ -2557,7 +3561,16 @@
     "longitude": 89.426,
     "imageFilename": "druk",
     "season": "Mar\u2013Jun, Sep\u2013Nov",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ]
   },
   {
     "id": "great-glen",
@@ -2579,7 +3592,16 @@
     "longitude": -5.111,
     "imageFilename": "great-glen",
     "season": "Apr\u2013Oct",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "tahoe-rim",
@@ -2601,7 +3623,12 @@
     "longitude": -120.142,
     "imageFilename": "tahoe-rim",
     "season": "Jul\u2013Sep",
-    "popularityScore": 7
+    "popularityScore": 7,
+    "seasonMonths": [
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "kilimanjaro-lemosho",
@@ -2623,7 +3650,17 @@
     "longitude": 37.115,
     "imageFilename": "kilimanjaro-lemosho",
     "season": "Jan\u2013Mar, Jun\u2013Oct",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "australian-alps",
@@ -2645,7 +3682,15 @@
     "longitude": 146.452,
     "imageFilename": "australian-alps",
     "season": "Nov\u2013Apr",
-    "popularityScore": 6
+    "popularityScore": 6,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      11,
+      12
+    ]
   },
   {
     "id": "heaphy",
@@ -2667,7 +3712,21 @@
     "longitude": 172.435,
     "imageFilename": "heaphy",
     "season": "Year-round",
-    "popularityScore": 8
+    "popularityScore": 8,
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
   },
   {
     "id": "mera_peak",
@@ -2687,7 +3746,14 @@
     "imageFilename": "mera_peak",
     "season": "March-May, October-November",
     "popularityScore": 8,
-    "durationBucket": "Long"
+    "durationBucket": "Long",
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ]
   },
   {
     "id": "island_peak",
@@ -2707,7 +3773,14 @@
     "imageFilename": "island_peak",
     "season": "March-May, October-November",
     "popularityScore": 9,
-    "durationBucket": "Long"
+    "durationBucket": "Long",
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ]
   },
   {
     "id": "stok_kangri",
@@ -2727,7 +3800,13 @@
     "imageFilename": "stok_kangri",
     "season": "June-September",
     "popularityScore": 8,
-    "durationBucket": "Medium"
+    "durationBucket": "Medium",
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "lobuche_east",
@@ -2747,7 +3826,14 @@
     "imageFilename": "lobuche_east",
     "season": "March-May, October-November",
     "popularityScore": 7,
-    "durationBucket": "Long"
+    "durationBucket": "Long",
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ]
   },
   {
     "id": "pisang_peak",
@@ -2767,7 +3853,14 @@
     "imageFilename": "pisang_peak",
     "season": "March-May, October-November",
     "popularityScore": 7,
-    "durationBucket": "Long"
+    "durationBucket": "Long",
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ]
   },
   {
     "id": "huayna_potosi",
@@ -2787,7 +3880,14 @@
     "imageFilename": "huayna_potosi",
     "season": "May-September",
     "popularityScore": 9,
-    "durationBucket": "Short"
+    "durationBucket": "Short",
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "cotopaxi",
@@ -2807,7 +3907,13 @@
     "imageFilename": "cotopaxi",
     "season": "November-February",
     "popularityScore": 8,
-    "durationBucket": "Short"
+    "durationBucket": "Short",
+    "seasonMonths": [
+      1,
+      2,
+      11,
+      12
+    ]
   },
   {
     "id": "nevado_pisco",
@@ -2827,7 +3933,14 @@
     "imageFilename": "nevado_pisco",
     "season": "May-September",
     "popularityScore": 7,
-    "durationBucket": "Short"
+    "durationBucket": "Short",
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "tent_peak",
@@ -2847,7 +3960,14 @@
     "imageFilename": "tent_peak",
     "season": "March-May, October-November",
     "popularityScore": 6,
-    "durationBucket": "Long"
+    "durationBucket": "Long",
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ]
   },
   {
     "id": "mount_elbrus",
@@ -2867,7 +3987,14 @@
     "imageFilename": "mount_elbrus",
     "season": "May-September",
     "popularityScore": 8,
-    "durationBucket": "Medium"
+    "durationBucket": "Medium",
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
   },
   {
     "id": "pico_orizaba",
@@ -2887,7 +4014,14 @@
     "imageFilename": "pico_orizaba",
     "season": "November-March",
     "popularityScore": 7,
-    "durationBucket": "Short"
+    "durationBucket": "Short",
+    "seasonMonths": [
+      1,
+      2,
+      3,
+      11,
+      12
+    ]
   },
   {
     "id": "yala_peak",
@@ -2907,7 +4041,14 @@
     "imageFilename": "yala_peak",
     "season": "March-May, October-November",
     "popularityScore": 6,
-    "durationBucket": "Medium"
+    "durationBucket": "Medium",
+    "seasonMonths": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ]
   },
   {
     "id": "friendship_peak",
@@ -2927,7 +4068,15 @@
     "imageFilename": "friendship_peak",
     "season": "May-October",
     "popularityScore": 7,
-    "durationBucket": "Short"
+    "durationBucket": "Short",
+    "seasonMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
   },
   {
     "id": "mount_kazbek",
@@ -2947,7 +4096,12 @@
     "imageFilename": "mount_kazbek",
     "season": "June-August",
     "popularityScore": 7,
-    "durationBucket": "Short"
+    "durationBucket": "Short",
+    "seasonMonths": [
+      6,
+      7,
+      8
+    ]
   },
   {
     "id": "gran_paradiso",
@@ -2967,6 +4121,12 @@
     "imageFilename": "gran_paradiso",
     "season": "June-September",
     "popularityScore": 7,
-    "durationBucket": "Short"
+    "durationBucket": "Short",
+    "seasonMonths": [
+      6,
+      7,
+      8,
+      9
+    ]
   }
 ]
