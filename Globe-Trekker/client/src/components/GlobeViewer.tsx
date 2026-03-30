@@ -8,6 +8,17 @@ import { useFilterStore } from "../store/useFilterStore";
 import { SwipeableTrekCards } from "./SwipeableTrekCards";
 import { clusterTreks } from "../lib/clustering";
 
+// ── Tier colour system ────────────────────────────────────────────────────────
+// T1 Gold · T2 Burnt Orange · T3 Forest Green · T4 Deep Purple · T5 Alpine Blue
+export const TIER_COLORS: Record<number, string> = {
+  1: "#D4AF37", // Gold         — Iconic
+  2: "#E67E22", // Burnt Orange — Classic
+  3: "#2E7D32", // Forest Green — Remote
+  4: "#6A4C93", // Deep Purple  — Thru-Hike
+  5: "#2E86C1", // Alpine Blue  — Trekking Peak
+};
+const CLUSTER_COLOR = "#94a3b8"; // slate-400 for clusters
+
 // ── Filter helpers ────────────────────────────────────────────────────────────
 function getAccommodationCategory(raw = "") {
   const a = raw.toLowerCase();
@@ -42,6 +53,19 @@ function getPopularityBucket(s: any) {
   return !s ? "Hidden Gem" : s >= 8 ? "Iconic" : s >= 5 ? "Popular" : "Hidden Gem";
 }
 
+// ── Month filter helper — uses pre-computed seasonMonths array ────────────────
+// Trek JSON now contains "seasonMonths": [3,4,5,10,11] for efficient filtering.
+// Falls back to full year if field is missing (no crash).
+function matchesMonth(trek: any, selectedMonths: string[]): boolean {
+  if (!selectedMonths.length) return true;
+  const trekMonths: number[] = Array.isArray(trek.seasonMonths)
+    ? trek.seasonMonths
+    : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; // fallback: year-round
+  // year-round treks always pass
+  if (trekMonths.length === 12) return true;
+  return selectedMonths.some(m => trekMonths.includes(parseInt(m, 10)));
+}
+
 // ── HTML pin factory ──────────────────────────────────────────────────────────
 function makePin(d: any, selectedTrekId: string | null, fireSelection: (d: any) => void): HTMLElement {
   const isCluster  = !!d.isCluster;
@@ -51,16 +75,10 @@ function makePin(d: any, selectedTrekId: string | null, fireSelection: (d: any) 
     ? `${d.treks?.[0]?.name ?? ""} +${(d.treks?.length ?? 1) - 1}`
     : (d.name ?? "");
 
-  // Tier-coloured pins: T1 gold · T2 blue · T3 slate · T4 Thru purple · cluster orange
   const trekTier = isCluster ? null : (d.tier ?? null);
-  // Base tier colour
   const tierColor = isCluster
-    ? "#f59e0b"
-    : trekTier === 1 ? "#f59e0b"   // gold   — Tier 1 iconic
-    : trekTier === 2 ? "#3b82f6"   // blue   — Tier 2 legendary
-    : trekTier === 3 ? "#64748b"   // slate  — Tier 3 remote/specialist
-    : trekTier === 4 ? "#8b5cf6"   // purple — Tier 4 thru-hike
-    : "#3b82f6";                   // fallback
+    ? CLUSTER_COLOR
+    : (TIER_COLORS[trekTier as number] ?? TIER_COLORS[2]);
 
   // Status override — completed/wishlist/inProgress beats tier colour
   const trekStatus = (!isCluster && trekId) ? getAllStoredStatuses()[trekId] : null;
@@ -68,6 +86,7 @@ function makePin(d: any, selectedTrekId: string | null, fireSelection: (d: any) 
                  : trekStatus === "inProgress" ? "#38bdf8"   // ice blue — active
                  : trekStatus === "wishlist"   ? "#a78bfa"   // violet — dreaming
                  : tierColor;
+
   const selectedRing = isSelected
     ? `box-shadow: 0 0 0 3px #fff, 0 0 0 5px ${pinColor}, 0 0 16px ${pinColor}88;`
     : `box-shadow: 0 0 10px ${pinColor}66;`;
@@ -206,29 +225,14 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     return () => ro.disconnect();
   }, []);
 
-  const { selectedTrekId, setSelectedTrekId } = useTrekStore();
-  const { continent, tier } = useFilterStore();
+  const { selectedTrekId, setSelectedTrekId, swipeableTreks, setSwipeableTreks } = useTrekStore();
+  const { tier, continent, month: selectedMonth } = useFilterStore();
+  const swipeRef = useRef<(treks: any[]) => void>(() => {});
   const [embedFilters, setEmbedFilters] = useState<any>(null);
-  const [swipeableTreks, setSwipeableTreks] = useState<any[] | null>(null);
-  const swipeRef = useRef(setSwipeableTreks);
-  useEffect(() => { swipeRef.current = setSwipeableTreks; }, []);
 
-  // ── Zoom via pointOfView altitude (smooth, works with HTML pins) ──────────
-  const zoomIn = useCallback(() => {
-    if (!globeEl.current) return;
-    const cur = globeEl.current.pointOfView();
-    globeEl.current.pointOfView({ altitude: Math.max(0.15, cur.altitude - 0.25) }, 350);
-  }, []);
-
-  const zoomOut = useCallback(() => {
-    if (!globeEl.current) return;
-    const cur = globeEl.current.pointOfView();
-    globeEl.current.pointOfView({ altitude: Math.min(4.5, cur.altitude + 0.25) }, 350);
-  }, []);
-
-  const stopHold = useCallback(() => {
-    if (holdTimerRef.current) { clearInterval(holdTimerRef.current); holdTimerRef.current = null; }
-  }, []);
+  const zoomIn  = useCallback(() => { globeEl.current?.pointOfView({ altitude: Math.max(0.2, ((globeEl.current?.pointOfView() as any)?.altitude ?? 2.5) * 0.75) }, 300); }, []);
+  const zoomOut = useCallback(() => { globeEl.current?.pointOfView({ altitude: Math.min(5.0, ((globeEl.current?.pointOfView() as any)?.altitude ?? 2.5) * 1.35) }, 300); }, []);
+  const stopHold = useCallback(() => { if (holdTimerRef.current) { clearInterval(holdTimerRef.current); holdTimerRef.current = null; } }, []);
 
   useEffect(() => () => stopHold(), [stopHold]);
 
@@ -276,12 +280,9 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
         if (!camera || !radius) return;
 
         const alt = Math.max(0.1, camera.position.length() / radius - 1);
-
-        // Pin scale: 1.0 at alt 2.5, shrinks toward 0.35 when zoomed in
         const pinScale = Math.max(0.35, Math.min(1.6, alt / 2.5));
         document.documentElement.style.setProperty("--pin-scale", pinScale.toFixed(3));
 
-        // Labels: show below alt 1.2 (zoomed in enough to read them)
         const showLabels = alt < 1.2;
         document.querySelectorAll<HTMLElement>(".pin-label").forEach(l => {
           l.style.opacity = showLabels ? "1" : "0";
@@ -291,7 +292,6 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
       controls.addEventListener("change", onCamChange);
     };
 
-    // Poll briefly until controls are ready
     const iv = setInterval(() => { tryAttach(); if (attached) clearInterval(iv); }, 200);
     return () => clearInterval(iv);
   }, []);
@@ -314,6 +314,7 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
           tier: n(payload.tier), region: n(payload.region ?? payload.continent),
           accommodation: n(payload.accommodation), terrain: n(payload.terrain),
           duration: n(payload.duration), popularity: n(payload.popularity),
+          month: n(payload.month),
         });
       }
       if (type === "TREKMIND_ZOOM_IN")  zoomIn();
@@ -323,21 +324,40 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
     return () => window.removeEventListener("message", onMsg);
   }, [zoomIn, zoomOut]);
 
-  // ── Filter treks ───────────────────────────────────────────────────────────
+  // ── Filter treks — uses seasonMonths array for safe month filtering ────────
   const filteredTreks = useMemo(() => {
     const f = embedFilters;
+    // Month filter: from embed or from global filter store
+    const activeMonths: string[] = f?.month?.length
+      ? f.month
+      : (selectedMonth && selectedMonth !== "ALL") ? [String(selectedMonth)] : [];
+
     return (TREKS as any[]).filter(trek => {
-      if (f?.tier?.length) { const nums = f.tier.map((t:any)=>parseInt(String(t).replace(/\D/g,""),10)); if (!nums.includes(trek.tier)) return false; }
-      else if (!isEmbed && tier && tier !== "ALL") { const n=parseInt(String(tier).replace(/\D/g,""),10); if (!isNaN(n)&&trek.tier!==n) return false; }
+      // Tier
+      if (f?.tier?.length) {
+        const nums = f.tier.map((t: any) => parseInt(String(t).replace(/\D/g, ""), 10));
+        if (!nums.includes(trek.tier)) return false;
+      } else if (!isEmbed && tier && tier !== "ALL") {
+        const n = parseInt(String(tier).replace(/\D/g, ""), 10);
+        if (!isNaN(n) && trek.tier !== n) return false;
+      }
+
+      // Region
       if (f?.region?.length && !f.region.includes(trek.region)) return false;
       else if (!isEmbed && continent && continent !== "ALL" && trek.region !== continent) return false;
+
+      // Accommodation / terrain / duration / popularity
       if (f?.accommodation?.length && !f.accommodation.includes(getAccommodationCategory(trek.accommodation))) return false;
       if (f?.terrain?.length     && !f.terrain.includes(getTerrainCategory(trek.terrain))) return false;
       if (f?.duration?.length    && !f.duration.includes(getDurationBucket(trek.totalDays, trek.tier))) return false;
       if (f?.popularity?.length  && !f.popularity.includes(getPopularityBucket(trek.popularityScore))) return false;
+
+      // Month — safe: uses pre-computed seasonMonths[], never crashes on string parse
+      if (activeMonths.length && !matchesMonth(trek, activeMonths)) return false;
+
       return true;
     });
-  }, [embedFilters, isEmbed, continent, tier]);
+  }, [embedFilters, isEmbed, continent, tier, selectedMonth]);
 
   const displayData = useMemo(() =>
     clusterTreks(filteredTreks, 250)
@@ -396,7 +416,7 @@ export function GlobeViewer({ hideCards }: { hideCards?: boolean }) {
         atmosphereAltitude={0.15}
       />
 
-      {/* Zoom controls — standalone only; embed handled by GlobeIntegration */}
+      {/* Zoom controls */}
       {!isEmbed && (
         <div style={{
           position: "absolute", bottom: 24, right: 24, zIndex: 30,
